@@ -1,0 +1,29 @@
+schema:
+  - ./*.graphql
+
+exec:
+  filename: ./gen/gen.go
+  package: gen
+
+model:
+  filename: ./gen/model.go
+  package: gen
+
+autobind:
+  - saas-starter-api/res/store
+
+models:
+  Void:
+    model: saas-starter-api/sys/graphql/scalar.Void
+  TimeInterval:
+    model: saas-starter-api/sys/graphql/scalar.TimeInterval
+  Application:
+    model: saas-starter-api/res/store.Application
+  User:
+    model: saas-starter-api/res/store.User
+  ApplicationType:
+    model: saas-starter-api/res/store.ApplicationType
+  ApplicationStatus:
+    model: saas-starter-api/res/store.ApplicationStatus
+  UserRole:
+    model: saas-starter-api/res/store.UserRole

@@ -1,0 +1,43 @@
+enum UserRole {
+    CLIENT
+    CLEANER
+    COMPANY_ADMIN
+    GLOBAL_ADMIN
+}
+
+input UpdateCurrentUserInput {
+    displayName: String
+}
+
+type User {
+    id: ID!
+    displayName: String!
+    role: UserRole!
+    email: String!
+
+    applications: [Application!]! @authRequired @goField(forceResolver: true)
+}
+
+type UserEdge {
+    node: User!
+    cursor: ID!
+}
+
+type UserConnection {
+    edges: [UserEdge!]!
+    totalCount: Int!
+}
+
+## QUERIES
+
+extend type Query {
+    currentUser: User
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    signOut: Void! @authRequired
+    deleteCurrentUser: Void! @authRequired
+    updateCurrentUser(input: UpdateCurrentUserInput!): User! @authRequired
+}

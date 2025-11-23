@@ -1,0 +1,13 @@
+Dockerfile
+.dockerignore
+
+.cursor
+.vscode
+.github
+.editorconfig
+.git
+.gitignore
+.env
+
+run.sh
+README.md

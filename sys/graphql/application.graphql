@@ -1,0 +1,43 @@
+enum ApplicationType {
+    CLEANER
+    COMPANY_ADMIN
+}
+
+enum ApplicationStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+input SubmitApplicationInput {
+    applicationType: ApplicationType!
+    message: String
+}
+
+type Application {
+    id: ID!
+    user: User! @goField(forceResolver: true)
+    applicationType: ApplicationType!
+    status: ApplicationStatus!
+    message: String
+    reviewedBy: User @goField(forceResolver: true)
+    reviewedAt: Time
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+## QUERIES
+
+extend type Query {
+    application(id: ID!): Application @authRequired
+    myApplications: [Application!]! @authRequired
+    pendingApplications: [Application!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    submitApplication(input: SubmitApplicationInput!): Application! @authRequired
+    approveApplication(applicationId: ID!): Application! @authRequired
+    rejectApplication(applicationId: ID!, reason: String): Application! @authRequired
+}
