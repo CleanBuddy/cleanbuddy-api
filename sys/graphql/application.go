@@ -42,6 +42,14 @@ func (ar *applicationResolver) ReviewedBy(ctx context.Context, obj *store.Applic
 	return user, nil
 }
 
+func (ar *applicationResolver) CompanyInfo(ctx context.Context, obj *store.Application) (*store.CompanyInfo, error) {
+	return obj.CompanyInfo, nil
+}
+
+func (ar *applicationResolver) Documents(ctx context.Context, obj *store.Application) (*store.ApplicationDocuments, error) {
+	return obj.Documents, nil
+}
+
 // QUERY RESOLVERS
 
 func (qr *queryResolver) Application(ctx context.Context, id string) (*store.Application, error) {
@@ -120,6 +128,16 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		}
 	}
 
+	// Validate required fields for cleaner applications
+	if input.ApplicationType == store.ApplicationTypeCleaner {
+		if input.CompanyInfo == nil {
+			return nil, errors.New("company information is required for cleaner applications")
+		}
+		if input.Documents == nil {
+			return nil, errors.New("documents are required for cleaner applications")
+		}
+	}
+
 	// Create the application
 	application := &store.Application{
 		ID:              fmt.Sprintf("app_%s", xid.New().String()),
@@ -130,6 +148,31 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 
 	if input.Message != nil {
 		application.Message = *input.Message
+	}
+
+	// Map company info if provided
+	if input.CompanyInfo != nil {
+		application.CompanyInfo = &store.CompanyInfo{
+			CompanyName:        input.CompanyInfo.CompanyName,
+			RegistrationNumber: input.CompanyInfo.RegistrationNumber,
+			TaxID:              input.CompanyInfo.TaxID,
+			CompanyStreet:      input.CompanyInfo.CompanyStreet,
+			CompanyCity:        input.CompanyInfo.CompanyCity,
+			CompanyPostalCode:  input.CompanyInfo.CompanyPostalCode,
+			CompanyCounty:      input.CompanyInfo.CompanyCounty,
+			CompanyCountry:     input.CompanyInfo.CompanyCountry,
+			BusinessType:       input.CompanyInfo.BusinessType,
+		}
+	}
+
+	// Map documents if provided
+	if input.Documents != nil {
+		application.Documents = &store.ApplicationDocuments{
+			IdentityDocumentUrl:     input.Documents.IdentityDocumentURL,
+			BusinessRegistrationUrl: input.Documents.BusinessRegistrationURL,
+			InsuranceCertificateUrl: input.Documents.InsuranceCertificateURL,
+			AdditionalDocuments:     input.Documents.AdditionalDocuments,
+		}
 	}
 
 	if err := mr.Store.Applications().Create(ctx, application); err != nil {
@@ -227,14 +270,11 @@ func (mr *mutationResolver) RejectApplication(ctx context.Context, applicationID
 		return nil, fmt.Errorf("application already %s", application.Status)
 	}
 
-	// Update application status
-	if err := mr.Store.Applications().UpdateStatus(ctx, applicationID, store.ApplicationStatusRejected, currentUser.ID); err != nil {
+	// Update application status with rejection reason
+	if err := mr.Store.Applications().UpdateStatusWithReason(ctx, applicationID, store.ApplicationStatusRejected, currentUser.ID, reason); err != nil {
 		mr.Logger.Printf("Error updating application status: %s", err)
 		return nil, errors.New("error rejecting application")
 	}
-
-	// TODO: Optionally store rejection reason in application message or separate field
-	// For now, we just update the status
 
 	// Fetch the updated application
 	updatedApplication, err := mr.Store.Applications().Get(ctx, applicationID)

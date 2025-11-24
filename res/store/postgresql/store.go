@@ -15,9 +15,17 @@ import (
 type storeImpl struct {
 	db *gorm.DB
 
-	authSessionStore *authSessionStore
-	userStore        *userStore
-	applicationStore *applicationStore
+	authSessionStore     *authSessionStore
+	userStore            *userStore
+	applicationStore     *applicationStore
+	cleanerProfileStore  *cleanerProfileStore
+	serviceAreaStore     *serviceAreaStore
+	addressStore         *addressStore
+	serviceStore         *serviceStore
+	bookingStore         *bookingStore
+	reviewStore          *reviewStore
+	transactionStore     *transactionStore
+	availabilityStore    *availabilityStore
 }
 
 func (sImpl *storeImpl) AuthSessions() store.AuthSessionStore {
@@ -30,6 +38,38 @@ func (sImpl *storeImpl) Users() store.UserStore {
 
 func (sImpl *storeImpl) Applications() store.ApplicationStore {
 	return sImpl.applicationStore
+}
+
+func (sImpl *storeImpl) CleanerProfiles() store.CleanerProfileStore {
+	return sImpl.cleanerProfileStore
+}
+
+func (sImpl *storeImpl) ServiceAreas() store.ServiceAreaStore {
+	return sImpl.serviceAreaStore
+}
+
+func (sImpl *storeImpl) Addresses() store.AddressStore {
+	return sImpl.addressStore
+}
+
+func (sImpl *storeImpl) Services() store.ServiceStore {
+	return sImpl.serviceStore
+}
+
+func (sImpl *storeImpl) Bookings() store.BookingStore {
+	return sImpl.bookingStore
+}
+
+func (sImpl *storeImpl) Reviews() store.ReviewStore {
+	return sImpl.reviewStore
+}
+
+func (sImpl *storeImpl) Transactions() store.TransactionStore {
+	return sImpl.transactionStore
+}
+
+func (sImpl *storeImpl) Availability() store.AvailabilityStore {
+	return sImpl.availabilityStore
 }
 
 func (sImpl *storeImpl) GetDB() interface{} {
@@ -57,6 +97,14 @@ func Connect(connectionUrl string) (*storeImpl, error) {
 	s.authSessionStore = NewAuthSessionStore(s)
 	s.userStore = NewUserStore(s)
 	s.applicationStore = NewApplicationStore(s)
+	s.cleanerProfileStore = NewCleanerProfileStore(s)
+	s.serviceAreaStore = NewServiceAreaStore(s)
+	s.addressStore = NewAddressStore(s)
+	s.serviceStore = NewServiceStore(s)
+	s.bookingStore = NewBookingStore(s)
+	s.reviewStore = NewReviewStore(s)
+	s.transactionStore = NewTransactionStore(s)
+	s.availabilityStore = NewAvailabilityStore(s)
 
 	return s, nil
 }

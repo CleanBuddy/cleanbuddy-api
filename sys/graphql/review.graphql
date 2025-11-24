@@ -1,0 +1,161 @@
+enum ReviewStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    FLAGGED
+}
+
+type Review {
+    id: ID!
+    booking: Booking!
+    bookingId: ID!
+    customer: User!
+    customerId: ID!
+    cleaner: User!
+    cleanerId: ID!
+    cleanerProfile: CleanerProfile!
+    cleanerProfileId: ID!
+
+    # Rating (1-5 stars)
+    rating: Int!
+
+    # Review Content
+    title: String
+    comment: String
+
+    # Detailed Ratings (optional)
+    qualityRating: Int
+    punctualityRating: Int
+    professionalismRating: Int
+    valueRating: Int
+
+    # Moderation
+    status: ReviewStatus!
+    flagReason: String
+    moderationNote: String
+    moderatedBy: User
+    moderatedById: ID
+    moderatedAt: Time
+
+    # Response from Cleaner
+    cleanerResponse: String
+    respondedAt: Time
+
+    # Helpfulness tracking
+    helpfulCount: Int!
+    notHelpfulCount: Int!
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type ReviewEdge {
+    node: Review!
+    cursor: ID!
+}
+
+type ReviewConnection {
+    edges: [ReviewEdge!]!
+    totalCount: Int!
+    averageRating: Float!
+}
+
+input CreateReviewInput {
+    bookingId: ID!
+    rating: Int!
+    title: String
+    comment: String
+    qualityRating: Int
+    punctualityRating: Int
+    professionalismRating: Int
+    valueRating: Int
+}
+
+input UpdateReviewInput {
+    id: ID!
+    rating: Int
+    title: String
+    comment: String
+    qualityRating: Int
+    punctualityRating: Int
+    professionalismRating: Int
+    valueRating: Int
+}
+
+input AddCleanerResponseInput {
+    reviewId: ID!
+    response: String!
+}
+
+input ModerateReviewInput {
+    reviewId: ID!
+    status: ReviewStatus!
+    note: String
+}
+
+input FlagReviewInput {
+    reviewId: ID!
+    reason: String!
+}
+
+input ReviewFiltersInput {
+    status: ReviewStatus
+    minRating: Int
+    maxRating: Int
+    hasComment: Boolean
+}
+
+## QUERIES
+
+extend type Query {
+    # Get review by ID
+    review(id: ID!): Review @authRequired
+
+    # Get review by booking ID
+    reviewByBooking(bookingId: ID!): Review @authRequired
+
+    # Get reviews for a cleaner profile
+    reviewsForCleaner(
+        cleanerProfileId: ID!
+        filters: ReviewFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): ReviewConnection! @authRequired
+
+    # Get reviews written by current user
+    myReviews(
+        filters: ReviewFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): ReviewConnection! @authRequired
+
+    # Admin: Get reviews pending moderation
+    reviewsPendingModeration(limit: Int): [Review!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create a review
+    createReview(input: CreateReviewInput!): Review! @authRequired
+
+    # Update a review
+    updateReview(input: UpdateReviewInput!): Review! @authRequired
+
+    # Delete a review
+    deleteReview(id: ID!): Void! @authRequired
+
+    # Cleaner: Add response to review
+    addCleanerResponse(input: AddCleanerResponseInput!): Review! @authRequired
+
+    # Flag a review for moderation
+    flagReview(input: FlagReviewInput!): Review! @authRequired
+
+    # Admin: Moderate review
+    moderateReview(input: ModerateReviewInput!): Review! @authRequired
+
+    # Mark review as helpful/not helpful
+    markReviewHelpful(reviewId: ID!, helpful: Boolean!): Review! @authRequired
+}

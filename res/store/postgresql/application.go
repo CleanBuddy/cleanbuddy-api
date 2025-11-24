@@ -101,6 +101,35 @@ func (s *applicationStore) UpdateStatus(ctx context.Context, id string, status s
 	return nil
 }
 
+func (s *applicationStore) UpdateStatusWithReason(ctx context.Context, id string, status store.ApplicationStatus, reviewerID string, reason *string) error {
+	now := time.Now()
+	updates := map[string]interface{}{
+		"status":         status,
+		"reviewed_by_id": reviewerID,
+		"reviewed_at":    now,
+		"updated_at":     now,
+	}
+
+	if reason != nil {
+		updates["rejection_reason"] = *reason
+	}
+
+	result := s.parent.db.WithContext(ctx).
+		Model(&store.Application{}).
+		Where("id = ?", id).
+		Updates(updates)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update application status: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("application not found: %s", id)
+	}
+
+	return nil
+}
+
 func (s *applicationStore) GetByUserAndType(ctx context.Context, userID string, appType store.ApplicationType) ([]*store.Application, error) {
 	var applications []*store.Application
 	result := s.parent.db.WithContext(ctx).

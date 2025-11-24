@@ -1,0 +1,141 @@
+enum CleanerTier {
+    NEW
+    STANDARD
+    PREMIUM
+    PRO
+}
+
+type CleanerProfile {
+    id: ID!
+    user: User!
+    userId: ID!
+
+    # Profile Information
+    bio: String
+    profilePicture: String
+
+    # Tier and Performance
+    tier: CleanerTier!
+    hourlyRate: Int! # Rate in bani (100 bani = 1 RON)
+    totalBookings: Int!
+    completedBookings: Int!
+    cancelledBookings: Int!
+    averageRating: Float!
+    totalReviews: Int!
+    totalEarnings: Int!
+
+    # Availability
+    isActive: Boolean!
+    isAvailableToday: Boolean!
+
+    # Verification
+    isVerified: Boolean!
+    verifiedAt: Time
+    backgroundCheck: Boolean!
+    identityVerified: Boolean!
+
+    # Related Data
+    serviceAreas: [ServiceArea!]! @goField(forceResolver: true)
+    reviews: [Review!]! @goField(forceResolver: true)
+    availability: [Availability!]! @goField(forceResolver: true)
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type CleanerProfileEdge {
+    node: CleanerProfile!
+    cursor: ID!
+}
+
+type CleanerProfileConnection {
+    edges: [CleanerProfileEdge!]!
+    totalCount: Int!
+}
+
+type TierRateRange {
+    tier: CleanerTier!
+    minRate: Int!
+    maxRate: Int!
+}
+
+input CreateCleanerProfileInput {
+    bio: String
+    profilePicture: String
+    hourlyRate: Int!
+    serviceAreaInputs: [CreateServiceAreaInput!]!
+}
+
+input UpdateCleanerProfileInput {
+    bio: String
+    profilePicture: String
+    hourlyRate: Int
+    isActive: Boolean
+    isAvailableToday: Boolean
+}
+
+input CleanerProfileFiltersInput {
+    tier: CleanerTier
+    minRating: Float
+    maxRating: Float
+    minHourlyRate: Int
+    maxHourlyRate: Int
+    isActive: Boolean
+    isVerified: Boolean
+    isAvailableToday: Boolean
+    serviceAreaIds: [ID!]
+    city: String
+    neighborhood: String
+    postalCode: String
+}
+
+## QUERIES
+
+extend type Query {
+    # Get cleaner profile by ID
+    cleanerProfile(id: ID!): CleanerProfile @authRequired
+
+    # Get cleaner profile by user ID
+    cleanerProfileByUserId(userId: ID!): CleanerProfile @authRequired
+
+    # Get current user's cleaner profile (if they are a cleaner)
+    myCleanerProfile: CleanerProfile @authRequired
+
+    # Search and list cleaner profiles
+    searchCleaners(
+        filters: CleanerProfileFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): CleanerProfileConnection! @authRequired
+
+    # Get available cleaners for a specific date/time and location
+    availableCleaners(
+        date: Time!
+        startTime: String!
+        duration: Float!
+        city: String!
+        neighborhood: String
+        postalCode: String
+        filters: CleanerProfileFiltersInput
+    ): [CleanerProfile!]! @authRequired
+
+    # Get tier rate ranges
+    tierRateRanges: [TierRateRange!]!
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create cleaner profile (after application approval)
+    createCleanerProfile(input: CreateCleanerProfileInput!): CleanerProfile! @authRequired
+
+    # Update cleaner profile
+    updateCleanerProfile(input: UpdateCleanerProfileInput!): CleanerProfile! @authRequired
+
+    # Delete cleaner profile
+    deleteCleanerProfile: Void! @authRequired
+
+    # Update cleaner tier (admin only)
+    updateCleanerTier(profileId: ID!, tier: CleanerTier!): CleanerProfile! @authRequired
+}

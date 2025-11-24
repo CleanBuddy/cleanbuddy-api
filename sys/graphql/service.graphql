@@ -1,0 +1,143 @@
+enum ServiceType {
+    GENERAL
+    DEEP
+    MOVE_IN_OUT
+}
+
+enum ServiceFrequency {
+    ONE_TIME
+    WEEKLY
+    BI_MONTHLY
+    MONTHLY
+}
+
+enum ServiceAddOn {
+    OVEN
+    WINDOWS
+    FRIDGE
+    GARAGE
+}
+
+type ServiceDefinition {
+    id: ID!
+    type: ServiceType!
+
+    # Service Details
+    name: String!
+    description: String
+
+    # Duration and Pricing Modifiers
+    baseHours: Float!
+    priceMultiplier: Float!
+
+    # Availability
+    isActive: Boolean!
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type ServiceAddOnDefinition {
+    id: ID!
+    addOn: ServiceAddOn!
+
+    # Add-On Details
+    name: String!
+    description: String
+
+    # Pricing
+    fixedPrice: Int!
+    estimatedHours: Float!
+
+    # Availability
+    isActive: Boolean!
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type ServicePriceCalculation {
+    servicePrice: Int!
+    addOnsPrice: Int!
+    travelFee: Int!
+    platformFee: Int!
+    totalPrice: Int!
+    cleanerPayout: Int!
+    estimatedDuration: Float!
+}
+
+input CalculateServicePriceInput {
+    cleanerProfileId: ID!
+    serviceType: ServiceType!
+    addOns: [ServiceAddOn!]
+    addressId: ID!
+}
+
+input CreateServiceDefinitionInput {
+    type: ServiceType!
+    name: String!
+    description: String
+    baseHours: Float!
+    priceMultiplier: Float!
+}
+
+input UpdateServiceDefinitionInput {
+    id: ID!
+    name: String
+    description: String
+    baseHours: Float
+    priceMultiplier: Float
+    isActive: Boolean
+}
+
+input CreateAddOnDefinitionInput {
+    addOn: ServiceAddOn!
+    name: String!
+    description: String
+    fixedPrice: Int!
+    estimatedHours: Float!
+}
+
+input UpdateAddOnDefinitionInput {
+    id: ID!
+    name: String
+    description: String
+    fixedPrice: Int
+    estimatedHours: Float
+    isActive: Boolean
+}
+
+## QUERIES
+
+extend type Query {
+    # Get service definition by type
+    serviceDefinition(type: ServiceType!): ServiceDefinition
+
+    # List all service definitions
+    serviceDefinitions(activeOnly: Boolean): [ServiceDefinition!]!
+
+    # Get add-on definition
+    addOnDefinition(addOn: ServiceAddOn!): ServiceAddOnDefinition
+
+    # List all add-on definitions
+    addOnDefinitions(activeOnly: Boolean): [ServiceAddOnDefinition!]!
+
+    # Calculate service price
+    calculateServicePrice(input: CalculateServicePriceInput!): ServicePriceCalculation! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Admin: Create service definition
+    createServiceDefinition(input: CreateServiceDefinitionInput!): ServiceDefinition! @authRequired
+
+    # Admin: Update service definition
+    updateServiceDefinition(input: UpdateServiceDefinitionInput!): ServiceDefinition! @authRequired
+
+    # Admin: Create add-on definition
+    createAddOnDefinition(input: CreateAddOnDefinitionInput!): ServiceAddOnDefinition! @authRequired
+
+    # Admin: Update add-on definition
+    updateAddOnDefinition(input: UpdateAddOnDefinitionInput!): ServiceAddOnDefinition! @authRequired
+}

@@ -1,17 +1,57 @@
 enum ApplicationType {
-    CLEANER
-    COMPANY_ADMIN
+    cleaner
+    company_admin
 }
 
 enum ApplicationStatus {
-    PENDING
-    APPROVED
-    REJECTED
+    pending
+    approved
+    rejected
+}
+
+input CompanyInfoInput {
+    companyName: String!
+    registrationNumber: String!
+    taxId: String!
+    companyStreet: String!
+    companyCity: String!
+    companyPostalCode: String!
+    companyCounty: String
+    companyCountry: String!
+    businessType: String
+}
+
+input ApplicationDocumentsInput {
+    identityDocumentUrl: String!
+    businessRegistrationUrl: String
+    insuranceCertificateUrl: String
+    additionalDocuments: [String!]
 }
 
 input SubmitApplicationInput {
     applicationType: ApplicationType!
     message: String
+    companyInfo: CompanyInfoInput
+    documents: ApplicationDocumentsInput
+}
+
+type CompanyInfo {
+    companyName: String!
+    registrationNumber: String!
+    taxId: String!
+    companyStreet: String!
+    companyCity: String!
+    companyPostalCode: String!
+    companyCounty: String
+    companyCountry: String!
+    businessType: String
+}
+
+type ApplicationDocuments {
+    identityDocumentUrl: String!
+    businessRegistrationUrl: String
+    insuranceCertificateUrl: String
+    additionalDocuments: [String!]
 }
 
 type Application {
@@ -20,6 +60,9 @@ type Application {
     applicationType: ApplicationType!
     status: ApplicationStatus!
     message: String
+    companyInfo: CompanyInfo
+    documents: ApplicationDocuments
+    rejectionReason: String
     reviewedBy: User @goField(forceResolver: true)
     reviewedAt: Time
     createdAt: Time!

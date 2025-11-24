@@ -4,20 +4,242 @@ package gen
 
 import (
 	"bytes"
+	"cleanbuddy-api/res/store"
 	"fmt"
 	"io"
-	"cleanbuddy-api/res/store"
 	"strconv"
+	"time"
 )
+
+type AddCleanerResponseInput struct {
+	ReviewID string `json:"reviewId"`
+	Response string `json:"response"`
+}
+
+type ApplicationDocumentsInput struct {
+	IdentityDocumentURL     string   `json:"identityDocumentUrl"`
+	BusinessRegistrationURL *string  `json:"businessRegistrationUrl,omitempty"`
+	InsuranceCertificateURL *string  `json:"insuranceCertificateUrl,omitempty"`
+	AdditionalDocuments     []string `json:"additionalDocuments,omitempty"`
+}
 
 type AuthResult struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
 
+type AvailabilityFiltersInput struct {
+	Type      *store.AvailabilityType `json:"type,omitempty"`
+	StartDate *time.Time              `json:"startDate,omitempty"`
+	EndDate   *time.Time              `json:"endDate,omitempty"`
+}
+
+type BookingConnection struct {
+	Edges      []*BookingEdge `json:"edges"`
+	TotalCount int            `json:"totalCount"`
+}
+
+type BookingEdge struct {
+	Node   *store.Booking `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
+type BookingFiltersInput struct {
+	Status      *store.BookingStatus `json:"status,omitempty"`
+	ServiceType *store.ServiceType   `json:"serviceType,omitempty"`
+	StartDate   *time.Time           `json:"startDate,omitempty"`
+	EndDate     *time.Time           `json:"endDate,omitempty"`
+	MinPrice    *int                 `json:"minPrice,omitempty"`
+	MaxPrice    *int                 `json:"maxPrice,omitempty"`
+	IsRecurring *bool                `json:"isRecurring,omitempty"`
+}
+
+type CalculateServicePriceInput struct {
+	CleanerProfileID string               `json:"cleanerProfileId"`
+	ServiceType      store.ServiceType    `json:"serviceType"`
+	AddOns           []store.ServiceAddOn `json:"addOns,omitempty"`
+	AddressID        string               `json:"addressId"`
+}
+
+type CancelBookingInput struct {
+	ID     string                   `json:"id"`
+	Reason store.CancellationReason `json:"reason"`
+	Note   *string                  `json:"note,omitempty"`
+}
+
+type CheckAvailabilityInput struct {
+	CleanerProfileID string    `json:"cleanerProfileId"`
+	Date             time.Time `json:"date"`
+	StartTime        string    `json:"startTime"`
+	EndTime          string    `json:"endTime"`
+}
+
+type CleanerEarnings struct {
+	CleanerID                 string `json:"cleanerId"`
+	TotalEarnings             int    `json:"totalEarnings"`
+	CompletedBookings         int    `json:"completedBookings"`
+	AverageEarningsPerBooking int    `json:"averageEarningsPerBooking"`
+	PendingPayouts            int    `json:"pendingPayouts"`
+}
+
+type CleanerProfileConnection struct {
+	Edges      []*CleanerProfileEdge `json:"edges"`
+	TotalCount int                   `json:"totalCount"`
+}
+
+type CleanerProfileEdge struct {
+	Node   *store.CleanerProfile `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type CleanerProfileFiltersInput struct {
+	Tier             *store.CleanerTier `json:"tier,omitempty"`
+	MinRating        *float64           `json:"minRating,omitempty"`
+	MaxRating        *float64           `json:"maxRating,omitempty"`
+	MinHourlyRate    *int               `json:"minHourlyRate,omitempty"`
+	MaxHourlyRate    *int               `json:"maxHourlyRate,omitempty"`
+	IsActive         *bool              `json:"isActive,omitempty"`
+	IsVerified       *bool              `json:"isVerified,omitempty"`
+	IsAvailableToday *bool              `json:"isAvailableToday,omitempty"`
+	ServiceAreaIds   []string           `json:"serviceAreaIds,omitempty"`
+	City             *string            `json:"city,omitempty"`
+	Neighborhood     *string            `json:"neighborhood,omitempty"`
+	PostalCode       *string            `json:"postalCode,omitempty"`
+}
+
+type CompanyInfoInput struct {
+	CompanyName        string  `json:"companyName"`
+	RegistrationNumber string  `json:"registrationNumber"`
+	TaxID              string  `json:"taxId"`
+	CompanyStreet      string  `json:"companyStreet"`
+	CompanyCity        string  `json:"companyCity"`
+	CompanyPostalCode  string  `json:"companyPostalCode"`
+	CompanyCounty      *string `json:"companyCounty,omitempty"`
+	CompanyCountry     string  `json:"companyCountry"`
+	BusinessType       *string `json:"businessType,omitempty"`
+}
+
+type CreateAddOnDefinitionInput struct {
+	AddOn          store.ServiceAddOn `json:"addOn"`
+	Name           string             `json:"name"`
+	Description    *string            `json:"description,omitempty"`
+	FixedPrice     int                `json:"fixedPrice"`
+	EstimatedHours float64            `json:"estimatedHours"`
+}
+
+type CreateAddressInput struct {
+	GooglePlaceID      string  `json:"googlePlaceId"`
+	Street             string  `json:"street"`
+	City               string  `json:"city"`
+	PostalCode         string  `json:"postalCode"`
+	County             *string `json:"county,omitempty"`
+	Country            string  `json:"country"`
+	Latitude           float64 `json:"latitude"`
+	Longitude          float64 `json:"longitude"`
+	Label              *string `json:"label,omitempty"`
+	Building           *string `json:"building,omitempty"`
+	Apartment          *string `json:"apartment,omitempty"`
+	Floor              *int    `json:"floor,omitempty"`
+	Neighborhood       *string `json:"neighborhood,omitempty"`
+	AccessInstructions *string `json:"accessInstructions,omitempty"`
+	IsDefault          *bool   `json:"isDefault,omitempty"`
+}
+
+type CreateAvailabilityInput struct {
+	Type              store.AvailabilityType   `json:"type"`
+	Date              time.Time                `json:"date"`
+	StartTime         string                   `json:"startTime"`
+	EndTime           string                   `json:"endTime"`
+	IsRecurring       *bool                    `json:"isRecurring,omitempty"`
+	RecurrencePattern *store.RecurrencePattern `json:"recurrencePattern,omitempty"`
+	RecurrenceEnd     *time.Time               `json:"recurrenceEnd,omitempty"`
+	Notes             *string                  `json:"notes,omitempty"`
+}
+
+type CreateBookingAddressInput struct {
+	Street        string  `json:"street"`
+	City          string  `json:"city"`
+	PostalCode    string  `json:"postalCode"`
+	Country       string  `json:"country"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	County        *string `json:"county,omitempty"`
+	GooglePlaceID *string `json:"googlePlaceId,omitempty"`
+}
+
+type CreateBookingInput struct {
+	CleanerProfileID string                     `json:"cleanerProfileId"`
+	AddressID        *string                    `json:"addressId,omitempty"`
+	Address          *CreateBookingAddressInput `json:"address,omitempty"`
+	ServiceType      store.ServiceType          `json:"serviceType"`
+	ServiceFrequency store.ServiceFrequency     `json:"serviceFrequency"`
+	ServiceAddOns    []store.ServiceAddOn       `json:"serviceAddOns,omitempty"`
+	ScheduledDate    time.Time                  `json:"scheduledDate"`
+	ScheduledTime    string                     `json:"scheduledTime"`
+	CustomerNotes    *string                    `json:"customerNotes,omitempty"`
+	IsRecurring      *bool                      `json:"isRecurring,omitempty"`
+	User             *CreateBookingUserInput    `json:"user,omitempty"`
+}
+
+type CreateBookingUserInput struct {
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+}
+
+type CreateCleanerProfileInput struct {
+	Bio               *string                   `json:"bio,omitempty"`
+	ProfilePicture    *string                   `json:"profilePicture,omitempty"`
+	HourlyRate        int                       `json:"hourlyRate"`
+	ServiceAreaInputs []*CreateServiceAreaInput `json:"serviceAreaInputs"`
+}
+
+type CreatePayoutBatchInput struct {
+	PeriodStart time.Time `json:"periodStart"`
+	PeriodEnd   time.Time `json:"periodEnd"`
+	Notes       *string   `json:"notes,omitempty"`
+}
+
+type CreateReviewInput struct {
+	BookingID             string  `json:"bookingId"`
+	Rating                int     `json:"rating"`
+	Title                 *string `json:"title,omitempty"`
+	Comment               *string `json:"comment,omitempty"`
+	QualityRating         *int    `json:"qualityRating,omitempty"`
+	PunctualityRating     *int    `json:"punctualityRating,omitempty"`
+	ProfessionalismRating *int    `json:"professionalismRating,omitempty"`
+	ValueRating           *int    `json:"valueRating,omitempty"`
+}
+
+type CreateServiceAreaInput struct {
+	City         string `json:"city"`
+	Neighborhood string `json:"neighborhood"`
+	PostalCode   string `json:"postalCode"`
+	TravelFee    *int   `json:"travelFee,omitempty"`
+	IsPreferred  *bool  `json:"isPreferred,omitempty"`
+}
+
+type CreateServiceDefinitionInput struct {
+	Type            store.ServiceType `json:"type"`
+	Name            string            `json:"name"`
+	Description     *string           `json:"description,omitempty"`
+	BaseHours       float64           `json:"baseHours"`
+	PriceMultiplier float64           `json:"priceMultiplier"`
+}
+
+type FlagReviewInput struct {
+	ReviewID string `json:"reviewId"`
+	Reason   string `json:"reason"`
+}
+
 type ForwardPaginationInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`
+}
+
+type ModerateReviewInput struct {
+	ReviewID string             `json:"reviewId"`
+	Status   store.ReviewStatus `json:"status"`
+	Note     *string            `json:"note,omitempty"`
 }
 
 type Mutation struct {
@@ -26,13 +248,154 @@ type Mutation struct {
 type Query struct {
 }
 
+type ReviewConnection struct {
+	Edges         []*ReviewEdge `json:"edges"`
+	TotalCount    int           `json:"totalCount"`
+	AverageRating float64       `json:"averageRating"`
+}
+
+type ReviewEdge struct {
+	Node   *store.Review `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
+type ReviewFiltersInput struct {
+	Status     *store.ReviewStatus `json:"status,omitempty"`
+	MinRating  *int                `json:"minRating,omitempty"`
+	MaxRating  *int                `json:"maxRating,omitempty"`
+	HasComment *bool               `json:"hasComment,omitempty"`
+}
+
+type ServicePriceCalculation struct {
+	ServicePrice      int     `json:"servicePrice"`
+	AddOnsPrice       int     `json:"addOnsPrice"`
+	TravelFee         int     `json:"travelFee"`
+	PlatformFee       int     `json:"platformFee"`
+	TotalPrice        int     `json:"totalPrice"`
+	CleanerPayout     int     `json:"cleanerPayout"`
+	EstimatedDuration float64 `json:"estimatedDuration"`
+}
+
 type SubmitApplicationInput struct {
-	ApplicationType store.ApplicationType `json:"applicationType"`
-	Message         *string               `json:"message,omitempty"`
+	ApplicationType store.ApplicationType      `json:"applicationType"`
+	Message         *string                    `json:"message,omitempty"`
+	CompanyInfo     *CompanyInfoInput          `json:"companyInfo,omitempty"`
+	Documents       *ApplicationDocumentsInput `json:"documents,omitempty"`
+}
+
+type TierRateRange struct {
+	Tier    store.CleanerTier `json:"tier"`
+	MinRate int               `json:"minRate"`
+	MaxRate int               `json:"maxRate"`
+}
+
+type TransactionConnection struct {
+	Edges       []*TransactionEdge `json:"edges"`
+	TotalCount  int                `json:"totalCount"`
+	TotalAmount int                `json:"totalAmount"`
+}
+
+type TransactionEdge struct {
+	Node   *store.Transaction `json:"node"`
+	Cursor string             `json:"cursor"`
+}
+
+type TransactionFiltersInput struct {
+	Type          *store.TransactionType   `json:"type,omitempty"`
+	Status        *store.TransactionStatus `json:"status,omitempty"`
+	PaymentMethod *store.PaymentMethod     `json:"paymentMethod,omitempty"`
+	StartDate     *time.Time               `json:"startDate,omitempty"`
+	EndDate       *time.Time               `json:"endDate,omitempty"`
+	MinAmount     *int                     `json:"minAmount,omitempty"`
+	MaxAmount     *int                     `json:"maxAmount,omitempty"`
+}
+
+type UpdateAddOnDefinitionInput struct {
+	ID             string   `json:"id"`
+	Name           *string  `json:"name,omitempty"`
+	Description    *string  `json:"description,omitempty"`
+	FixedPrice     *int     `json:"fixedPrice,omitempty"`
+	EstimatedHours *float64 `json:"estimatedHours,omitempty"`
+	IsActive       *bool    `json:"isActive,omitempty"`
+}
+
+type UpdateAddressInput struct {
+	ID                 string   `json:"id"`
+	Label              *string  `json:"label,omitempty"`
+	Street             *string  `json:"street,omitempty"`
+	Building           *string  `json:"building,omitempty"`
+	Apartment          *string  `json:"apartment,omitempty"`
+	Floor              *int     `json:"floor,omitempty"`
+	City               *string  `json:"city,omitempty"`
+	Neighborhood       *string  `json:"neighborhood,omitempty"`
+	PostalCode         *string  `json:"postalCode,omitempty"`
+	County             *string  `json:"county,omitempty"`
+	Country            *string  `json:"country,omitempty"`
+	AccessInstructions *string  `json:"accessInstructions,omitempty"`
+	IsDefault          *bool    `json:"isDefault,omitempty"`
+	Latitude           *float64 `json:"latitude,omitempty"`
+	Longitude          *float64 `json:"longitude,omitempty"`
+}
+
+type UpdateAvailabilityInput struct {
+	ID                string                   `json:"id"`
+	Type              *store.AvailabilityType  `json:"type,omitempty"`
+	Date              *time.Time               `json:"date,omitempty"`
+	StartTime         *string                  `json:"startTime,omitempty"`
+	EndTime           *string                  `json:"endTime,omitempty"`
+	IsRecurring       *bool                    `json:"isRecurring,omitempty"`
+	RecurrencePattern *store.RecurrencePattern `json:"recurrencePattern,omitempty"`
+	RecurrenceEnd     *time.Time               `json:"recurrenceEnd,omitempty"`
+	Notes             *string                  `json:"notes,omitempty"`
+}
+
+type UpdateBookingInput struct {
+	ID            string     `json:"id"`
+	ScheduledDate *time.Time `json:"scheduledDate,omitempty"`
+	ScheduledTime *string    `json:"scheduledTime,omitempty"`
+	CustomerNotes *string    `json:"customerNotes,omitempty"`
+	CleanerNotes  *string    `json:"cleanerNotes,omitempty"`
+}
+
+type UpdateCleanerProfileInput struct {
+	Bio              *string `json:"bio,omitempty"`
+	ProfilePicture   *string `json:"profilePicture,omitempty"`
+	HourlyRate       *int    `json:"hourlyRate,omitempty"`
+	IsActive         *bool   `json:"isActive,omitempty"`
+	IsAvailableToday *bool   `json:"isAvailableToday,omitempty"`
 }
 
 type UpdateCurrentUserInput struct {
 	DisplayName *string `json:"displayName,omitempty"`
+}
+
+type UpdateReviewInput struct {
+	ID                    string  `json:"id"`
+	Rating                *int    `json:"rating,omitempty"`
+	Title                 *string `json:"title,omitempty"`
+	Comment               *string `json:"comment,omitempty"`
+	QualityRating         *int    `json:"qualityRating,omitempty"`
+	PunctualityRating     *int    `json:"punctualityRating,omitempty"`
+	ProfessionalismRating *int    `json:"professionalismRating,omitempty"`
+	ValueRating           *int    `json:"valueRating,omitempty"`
+}
+
+type UpdateServiceAreaInput struct {
+	ID           string  `json:"id"`
+	City         *string `json:"city,omitempty"`
+	Neighborhood *string `json:"neighborhood,omitempty"`
+	PostalCode   *string `json:"postalCode,omitempty"`
+	TravelFee    *int    `json:"travelFee,omitempty"`
+	IsPreferred  *bool   `json:"isPreferred,omitempty"`
+}
+
+type UpdateServiceDefinitionInput struct {
+	ID              string   `json:"id"`
+	Name            *string  `json:"name,omitempty"`
+	Description     *string  `json:"description,omitempty"`
+	BaseHours       *float64 `json:"baseHours,omitempty"`
+	PriceMultiplier *float64 `json:"priceMultiplier,omitempty"`
+	IsActive        *bool    `json:"isActive,omitempty"`
 }
 
 type UserConnection struct {

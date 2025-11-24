@@ -1,0 +1,101 @@
+type Address {
+    id: ID!
+    user: User!
+    userId: ID!
+
+    # Address Fields
+    label: String
+    street: String!
+    building: String
+    apartment: String
+    floor: Int
+    city: String!
+    neighborhood: String
+    postalCode: String!
+    county: String
+    country: String!
+
+    # Additional Information
+    accessInstructions: String
+    isDefault: Boolean!
+
+    # Coordinates (from Google Maps)
+    latitude: Float
+    longitude: Float
+
+    # Google Maps Place ID (for verification and future lookups)
+    googlePlaceId: String
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+input CreateAddressInput {
+    # Google Maps Place ID (required - from Google Places API autocomplete)
+    googlePlaceId: String!
+
+    # Address fields (populated from Google Maps API)
+    street: String!
+    city: String!
+    postalCode: String!
+    county: String
+    country: String!
+    latitude: Float!
+    longitude: Float!
+
+    # User-provided details
+    label: String
+    building: String
+    apartment: String
+    floor: Int
+    neighborhood: String
+    accessInstructions: String
+    isDefault: Boolean
+}
+
+input UpdateAddressInput {
+    id: ID!
+    label: String
+    street: String
+    building: String
+    apartment: String
+    floor: Int
+    city: String
+    neighborhood: String
+    postalCode: String
+    county: String
+    country: String
+    accessInstructions: String
+    isDefault: Boolean
+    latitude: Float
+    longitude: Float
+}
+
+## QUERIES
+
+extend type Query {
+    # Get address by ID
+    address(id: ID!): Address @authRequired
+
+    # Get all addresses for current user
+    myAddresses: [Address!]! @authRequired
+
+    # Get default address for current user
+    myDefaultAddress: Address @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create address
+    createAddress(input: CreateAddressInput!): Address! @authRequired
+
+    # Update address
+    updateAddress(input: UpdateAddressInput!): Address! @authRequired
+
+    # Delete address
+    deleteAddress(id: ID!): Void! @authRequired
+
+    # Set address as default
+    setDefaultAddress(id: ID!): Address! @authRequired
+}

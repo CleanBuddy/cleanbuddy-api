@@ -1,0 +1,174 @@
+enum TransactionType {
+    PAYMENT
+    PAYOUT
+    REFUND
+}
+
+enum TransactionStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+    CANCELLED
+}
+
+enum PaymentMethod {
+    CARD
+    BANK_TRANSFER
+    CASH
+}
+
+type Transaction {
+    id: ID!
+    type: TransactionType!
+    status: TransactionStatus!
+
+    # Related Entities
+    booking: Booking
+    bookingId: ID
+
+    # Payer and Payee
+    payer: User!
+    payerId: ID!
+    payee: User!
+    payeeId: ID!
+
+    # Amount Details (in bani)
+    amount: Int!
+    platformFee: Int!
+    netAmount: Int!
+
+    # Payment Details
+    paymentMethod: PaymentMethod!
+    currency: String!
+
+    # External Payment Provider Data
+    stripePaymentId: String
+    stripeTransferId: String
+    stripeRefundId: String
+
+    # Metadata
+    description: String
+    metadata: JSON
+
+    # Failure Information
+    failureReason: String
+    failureCode: String
+
+    # Timestamps
+    processedAt: Time!
+    completedAt: Time
+    failedAt: Time
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type TransactionEdge {
+    node: Transaction!
+    cursor: ID!
+}
+
+type TransactionConnection {
+    edges: [TransactionEdge!]!
+    totalCount: Int!
+    totalAmount: Int!
+}
+
+type PayoutBatch {
+    id: ID!
+    status: TransactionStatus!
+
+    # Batch Details
+    totalAmount: Int!
+    totalPayouts: Int!
+    periodStart: Time!
+    periodEnd: Time!
+
+    # Processing
+    initiatedBy: User!
+    initiatedById: ID!
+    processedAt: Time
+    completedAt: Time
+
+    # Metadata
+    notes: String
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type CleanerEarnings {
+    cleanerId: ID!
+    totalEarnings: Int!
+    completedBookings: Int!
+    averageEarningsPerBooking: Int!
+    pendingPayouts: Int!
+}
+
+input TransactionFiltersInput {
+    type: TransactionType
+    status: TransactionStatus
+    paymentMethod: PaymentMethod
+    startDate: Time
+    endDate: Time
+    minAmount: Int
+    maxAmount: Int
+}
+
+input CreatePayoutBatchInput {
+    periodStart: Time!
+    periodEnd: Time!
+    notes: String
+}
+
+## QUERIES
+
+extend type Query {
+    # Get transaction by ID
+    transaction(id: ID!): Transaction @authRequired
+
+    # Get transaction by Stripe payment ID
+    transactionByStripePaymentId(stripePaymentId: String!): Transaction @authRequired
+
+    # Get transactions by booking
+    transactionsByBooking(bookingId: ID!): [Transaction!]! @authRequired
+
+    # Get my transactions (as payer or payee)
+    myTransactions(
+        filters: TransactionFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): TransactionConnection! @authRequired
+
+    # Cleaner: Get my earnings
+    myEarnings(startDate: Time, endDate: Time): CleanerEarnings! @authRequired
+
+    # Admin: Get all transactions
+    allTransactions(
+        filters: TransactionFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): TransactionConnection! @authRequired
+
+    # Admin: Get transactions due for payout
+    transactionsDueForPayout(beforeDate: Time!): [Transaction!]! @authRequired
+
+    # Admin: Get payout batch
+    payoutBatch(id: ID!): PayoutBatch @authRequired
+
+    # Admin: List payout batches
+    payoutBatches(limit: Int, offset: Int): [PayoutBatch!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Admin: Create payout batch
+    createPayoutBatch(input: CreatePayoutBatchInput!): PayoutBatch! @authRequired
+
+    # Admin: Process payout batch
+    processPayoutBatch(id: ID!): PayoutBatch! @authRequired
+}

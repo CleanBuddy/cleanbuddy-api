@@ -1,5 +1,5 @@
 schema:
-  - ./*.graphql
+  - "*.graphql"
 
 exec:
   filename: ./gen/gen.go
@@ -19,6 +19,10 @@ models:
     model: cleanbuddy-api/sys/graphql/scalar.TimeInterval
   Application:
     model: cleanbuddy-api/res/store.Application
+  CompanyInfo:
+    model: cleanbuddy-api/res/store.CompanyInfo
+  ApplicationDocuments:
+    model: cleanbuddy-api/res/store.ApplicationDocuments
   User:
     model: cleanbuddy-api/res/store.User
   ApplicationType:
@@ -27,3 +31,63 @@ models:
     model: cleanbuddy-api/res/store.ApplicationStatus
   UserRole:
     model: cleanbuddy-api/res/store.UserRole
+
+  # Cleaner Profile
+  CleanerProfile:
+    model: cleanbuddy-api/res/store.CleanerProfile
+  CleanerTier:
+    model: cleanbuddy-api/res/store.CleanerTier
+
+  # Service Area
+  ServiceArea:
+    model: cleanbuddy-api/res/store.ServiceArea
+
+  # Address
+  Address:
+    model: cleanbuddy-api/res/store.Address
+
+  # Service
+  ServiceDefinition:
+    model: cleanbuddy-api/res/store.ServiceDefinition
+  ServiceAddOnDefinition:
+    model: cleanbuddy-api/res/store.ServiceAddOnDefinition
+  ServiceType:
+    model: cleanbuddy-api/res/store.ServiceType
+  ServiceFrequency:
+    model: cleanbuddy-api/res/store.ServiceFrequency
+  ServiceAddOn:
+    model: cleanbuddy-api/res/store.ServiceAddOn
+
+  # Booking
+  Booking:
+    model: cleanbuddy-api/res/store.Booking
+  BookingStatus:
+    model: cleanbuddy-api/res/store.BookingStatus
+  CancellationReason:
+    model: cleanbuddy-api/res/store.CancellationReason
+
+  # Review
+  Review:
+    model: cleanbuddy-api/res/store.Review
+  ReviewStatus:
+    model: cleanbuddy-api/res/store.ReviewStatus
+
+  # Transaction
+  Transaction:
+    model: cleanbuddy-api/res/store.Transaction
+  PayoutBatch:
+    model: cleanbuddy-api/res/store.PayoutBatch
+  TransactionType:
+    model: cleanbuddy-api/res/store.TransactionType
+  TransactionStatus:
+    model: cleanbuddy-api/res/store.TransactionStatus
+  PaymentMethod:
+    model: cleanbuddy-api/res/store.PaymentMethod
+
+  # Availability
+  Availability:
+    model: cleanbuddy-api/res/store.Availability
+  AvailabilityType:
+    model: cleanbuddy-api/res/store.AvailabilityType
+  RecurrencePattern:
+    model: cleanbuddy-api/res/store.RecurrencePattern

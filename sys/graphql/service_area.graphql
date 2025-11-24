@@ -1,0 +1,66 @@
+type ServiceArea {
+    id: ID!
+    cleanerProfile: CleanerProfile!
+    cleanerProfileId: ID!
+
+    # Location Information
+    city: String!
+    neighborhood: String!
+    postalCode: String!
+
+    # Travel Settings
+    travelFee: Int!
+    isPreferred: Boolean!
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+input CreateServiceAreaInput {
+    city: String!
+    neighborhood: String!
+    postalCode: String!
+    travelFee: Int
+    isPreferred: Boolean
+}
+
+input UpdateServiceAreaInput {
+    id: ID!
+    city: String
+    neighborhood: String
+    postalCode: String
+    travelFee: Int
+    isPreferred: Boolean
+}
+
+## QUERIES
+
+extend type Query {
+    # Get service area by ID
+    serviceArea(id: ID!): ServiceArea @authRequired
+
+    # Get all service areas for a cleaner profile
+    serviceAreasByCleanerProfile(cleanerProfileId: ID!): [ServiceArea!]! @authRequired
+
+    # Get my service areas (for current cleaner)
+    myServiceAreas: [ServiceArea!]! @authRequired
+
+    # Find cleaners in a specific area
+    cleanersInArea(city: String!, neighborhood: String!): [CleanerProfile!]! @authRequired
+
+    # Find cleaners by postal code
+    cleanersByPostalCode(postalCode: String!): [CleanerProfile!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Add service area to cleaner profile
+    addServiceArea(input: CreateServiceAreaInput!): ServiceArea! @authRequired
+
+    # Update service area
+    updateServiceArea(input: UpdateServiceAreaInput!): ServiceArea! @authRequired
+
+    # Delete service area
+    deleteServiceArea(id: ID!): Void! @authRequired
+}

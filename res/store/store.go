@@ -9,6 +9,14 @@ type Store interface {
 	AuthSessions() AuthSessionStore
 	Users() UserStore
 	Applications() ApplicationStore
+	CleanerProfiles() CleanerProfileStore
+	ServiceAreas() ServiceAreaStore
+	Addresses() AddressStore
+	Services() ServiceStore
+	Bookings() BookingStore
+	Reviews() ReviewStore
+	Transactions() TransactionStore
+	Availability() AvailabilityStore
 
 	// Database access for advanced operations
 	GetDB() interface{} // Returns the underlying database connection

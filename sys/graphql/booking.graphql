@@ -1,0 +1,201 @@
+enum BookingStatus {
+    PENDING
+    CONFIRMED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+    NO_SHOW
+}
+
+enum CancellationReason {
+    CUSTOMER_REQUEST
+    CLEANER_REQUEST
+    EMERGENCY
+    WEATHER
+    OTHER
+}
+
+type Booking {
+    id: ID!
+    customer: User!
+    customerId: ID!
+    cleaner: User!
+    cleanerId: ID!
+    cleanerProfile: CleanerProfile!
+    cleanerProfileId: ID!
+
+    # Service Details
+    serviceType: ServiceType!
+    serviceFrequency: ServiceFrequency!
+    serviceAddOns: [ServiceAddOn!]!
+
+    # Scheduling
+    scheduledDate: Time!
+    scheduledTime: String!
+    duration: Float!
+
+    # Address
+    address: Address!
+    addressId: ID!
+
+    # Pricing (in bani)
+    cleanerHourlyRate: Int!
+    servicePrice: Int!
+    addOnsPrice: Int!
+    travelFee: Int!
+    platformFee: Int!
+    totalPrice: Int!
+    cleanerPayout: Int!
+
+    # Status and Progress
+    status: BookingStatus!
+    cancellationReason: CancellationReason
+    cancellationNote: String
+    cancelledBy: User
+    cancelledById: ID
+    cancelledAt: Time
+
+    # Timestamps
+    confirmedAt: Time
+    startedAt: Time
+    completedAt: Time
+
+    # Recurring Booking Support
+    isRecurring: Boolean!
+    parentBookingId: ID
+    nextBookingId: ID
+
+    # Special Instructions
+    customerNotes: String
+    cleanerNotes: String
+
+    # Related Data
+    review: Review @goField(forceResolver: true)
+    transaction: Transaction @goField(forceResolver: true)
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type BookingEdge {
+    node: Booking!
+    cursor: ID!
+}
+
+type BookingConnection {
+    edges: [BookingEdge!]!
+    totalCount: Int!
+}
+
+input CreateBookingAddressInput {
+  street: String!
+  city: String!
+  postalCode: String!
+  country: String!
+  latitude: Float!
+  longitude: Float!
+  county: String
+  googlePlaceId: String
+}
+
+input CreateBookingUserInput {
+  displayName: String!
+  email: String!
+}
+
+input CreateBookingInput {
+    cleanerProfileId: ID!
+    addressId: ID
+    address: CreateBookingAddressInput
+    serviceType: ServiceType!
+    serviceFrequency: ServiceFrequency!
+    serviceAddOns: [ServiceAddOn!]
+    scheduledDate: Time!
+    scheduledTime: String!
+    customerNotes: String
+    isRecurring: Boolean
+    user: CreateBookingUserInput
+}
+
+input UpdateBookingInput {
+    id: ID!
+    scheduledDate: Time
+    scheduledTime: String
+    customerNotes: String
+    cleanerNotes: String
+}
+
+input CancelBookingInput {
+    id: ID!
+    reason: CancellationReason!
+    note: String
+}
+
+input BookingFiltersInput {
+    status: BookingStatus
+    serviceType: ServiceType
+    startDate: Time
+    endDate: Time
+    minPrice: Int
+    maxPrice: Int
+    isRecurring: Boolean
+}
+
+## QUERIES
+
+extend type Query {
+    # Get booking by ID
+    booking(id: ID!): Booking @authRequired
+
+    # Get my bookings (as customer)
+    myBookings(
+        filters: BookingFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): BookingConnection! @authRequired
+
+    # Get my jobs (as cleaner)
+    myJobs(
+        filters: BookingFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): BookingConnection! @authRequired
+
+    # Get upcoming bookings (next 7 days by default)
+    upcomingBookings(limit: Int): [Booking!]! @authRequired
+
+    # Admin: List all bookings
+    allBookings(
+        filters: BookingFiltersInput
+        limit: Int
+        offset: Int
+        orderBy: String
+    ): BookingConnection! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create a new booking (supports guest checkout via user input)
+    createBooking(input: CreateBookingInput!): Booking!
+
+    # Update booking details
+    updateBooking(input: UpdateBookingInput!): Booking! @authRequired
+
+    # Confirm booking (cleaner action)
+    confirmBooking(id: ID!): Booking! @authRequired
+
+    # Start booking (cleaner marks as in progress)
+    startBooking(id: ID!): Booking! @authRequired
+
+    # Complete booking (cleaner marks as completed)
+    completeBooking(id: ID!, cleanerNotes: String): Booking! @authRequired
+
+    # Cancel booking
+    cancelBooking(input: CancelBookingInput!): Booking! @authRequired
+
+    # Mark as no-show
+    markNoShow(id: ID!): Booking! @authRequired
+}

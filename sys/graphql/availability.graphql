@@ -1,0 +1,111 @@
+enum AvailabilityType {
+    AVAILABLE
+    UNAVAILABLE
+}
+
+enum RecurrencePattern {
+    NONE
+    WEEKLY
+}
+
+type Availability {
+    id: ID!
+    cleanerProfile: CleanerProfile!
+    cleanerProfileId: ID!
+
+    # Type
+    type: AvailabilityType!
+
+    # Date and Time
+    date: Time!
+    startTime: String!
+    endTime: String!
+
+    # Recurrence
+    isRecurring: Boolean!
+    recurrencePattern: RecurrencePattern
+    recurrenceEnd: Time
+
+    # Notes
+    notes: String
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+input CreateAvailabilityInput {
+    type: AvailabilityType!
+    date: Time!
+    startTime: String!
+    endTime: String!
+    isRecurring: Boolean
+    recurrencePattern: RecurrencePattern
+    recurrenceEnd: Time
+    notes: String
+}
+
+input UpdateAvailabilityInput {
+    id: ID!
+    type: AvailabilityType
+    date: Time
+    startTime: String
+    endTime: String
+    isRecurring: Boolean
+    recurrencePattern: RecurrencePattern
+    recurrenceEnd: Time
+    notes: String
+}
+
+input AvailabilityFiltersInput {
+    type: AvailabilityType
+    startDate: Time
+    endDate: Time
+}
+
+input CheckAvailabilityInput {
+    cleanerProfileId: ID!
+    date: Time!
+    startTime: String!
+    endTime: String!
+}
+
+## QUERIES
+
+extend type Query {
+    # Get availability by ID
+    availability(id: ID!): Availability @authRequired
+
+    # Get availability for a cleaner profile
+    availabilityForCleaner(
+        cleanerProfileId: ID!
+        filters: AvailabilityFiltersInput
+        limit: Int
+        offset: Int
+    ): [Availability!]! @authRequired
+
+    # Get my availability (for current cleaner)
+    myAvailability(
+        filters: AvailabilityFiltersInput
+        limit: Int
+        offset: Int
+    ): [Availability!]! @authRequired
+
+    # Check if cleaner is available at specific date/time
+    isCleanerAvailable(input: CheckAvailabilityInput!): Boolean! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create availability entry
+    createAvailability(input: CreateAvailabilityInput!): Availability! @authRequired
+
+    # Update availability entry
+    updateAvailability(input: UpdateAvailabilityInput!): Availability! @authRequired
+
+    # Delete availability entry
+    deleteAvailability(id: ID!): Void! @authRequired
+
+    # Bulk create availability (e.g., set weekly schedule)
+    bulkCreateAvailability(inputs: [CreateAvailabilityInput!]!): [Availability!]! @authRequired
+}
