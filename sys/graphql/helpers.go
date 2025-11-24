@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"saas-starter-api/res/store"
-	"saas-starter-api/sys/http/middleware"
+	"cleanbuddy-api/res/store"
+	"cleanbuddy-api/sys/http/middleware"
 )
 
 // requireAuth validates that a user is authenticated

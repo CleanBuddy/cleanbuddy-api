@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	"saas-starter-api/api"
-	"saas-starter-api/api/playground"
-	"saas-starter-api/res/store"
-	"saas-starter-api/res/store/postgresql"
+	"cleanbuddy-api/api"
+	"cleanbuddy-api/api/playground"
+	"cleanbuddy-api/res/store"
+	"cleanbuddy-api/res/store/postgresql"
 
 	"github.com/joho/godotenv"
 )
@@ -19,10 +19,10 @@ var logger = log.New(os.Stdout, "(cmd/main.go)", log.LstdFlags|log.LUTC|log.Llon
 
 func main() {
 	// Load .env file in development
-	// Try multiple locations: current dir, saas-starter-api/, parent dir
+	// Try multiple locations: current dir, cleanbuddy-api/, parent dir
 	err := godotenv.Load()
 	if err != nil {
-		err = godotenv.Load("saas-starter-api/.env")
+		err = godotenv.Load("cleanbuddy-api/.env")
 	}
 	if err != nil {
 		err = godotenv.Load(".env")

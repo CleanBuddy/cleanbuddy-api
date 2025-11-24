@@ -6,7 +6,7 @@ import (
 	"net/mail"
 	"unicode/utf8"
 
-	"saas-starter-api/res/store"
+	"cleanbuddy-api/res/store"
 )
 
 type userStore struct {

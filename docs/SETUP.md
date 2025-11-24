@@ -1,6 +1,6 @@
 # Setup Guide
 
-Complete guide to setting up the SaaS Starter API for local development.
+Complete guide to setting up the CleanBuddy API for local development.
 
 ## Table of Contents
 

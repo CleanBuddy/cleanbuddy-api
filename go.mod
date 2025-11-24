@@ -1,4 +1,4 @@
-module saas-starter-api
+module cleanbuddy-api
 
 go 1.24.0
 

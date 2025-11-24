@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"saas-starter-api/res/store"
+	"cleanbuddy-api/res/store"
 )
 
 type applicationStore struct {

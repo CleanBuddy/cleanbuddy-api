@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"saas-starter-api/res/notification"
+	"cleanbuddy-api/res/notification"
 )
 
 // notificationService implements the NotificationService interface

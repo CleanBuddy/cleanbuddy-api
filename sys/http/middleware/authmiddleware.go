@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"saas-starter-api/res/auth"
-	"saas-starter-api/res/store"
+	"cleanbuddy-api/res/auth"
+	"cleanbuddy-api/res/store"
 )
 
 // SESSION USER GETTER

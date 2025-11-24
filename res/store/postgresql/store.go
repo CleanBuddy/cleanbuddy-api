@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"saas-starter-api/res/store"
+	"cleanbuddy-api/res/store"
 
 	sqlCommenter "github.com/gouyelliot/gorm-sqlcommenter-plugin"
 	"github.com/graph-gophers/dataloader"

@@ -10,20 +10,20 @@ model:
   package: gen
 
 autobind:
-  - saas-starter-api/res/store
+  - cleanbuddy-api/res/store
 
 models:
   Void:
-    model: saas-starter-api/sys/graphql/scalar.Void
+    model: cleanbuddy-api/sys/graphql/scalar.Void
   TimeInterval:
-    model: saas-starter-api/sys/graphql/scalar.TimeInterval
+    model: cleanbuddy-api/sys/graphql/scalar.TimeInterval
   Application:
-    model: saas-starter-api/res/store.Application
+    model: cleanbuddy-api/res/store.Application
   User:
-    model: saas-starter-api/res/store.User
+    model: cleanbuddy-api/res/store.User
   ApplicationType:
-    model: saas-starter-api/res/store.ApplicationType
+    model: cleanbuddy-api/res/store.ApplicationType
   ApplicationStatus:
-    model: saas-starter-api/res/store.ApplicationStatus
+    model: cleanbuddy-api/res/store.ApplicationStatus
   UserRole:
-    model: saas-starter-api/res/store.UserRole
+    model: cleanbuddy-api/res/store.UserRole

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"saas-starter-api/res/store"
-	"saas-starter-api/sys/graphql/gen"
-	"saas-starter-api/sys/graphql/scalar"
-	"saas-starter-api/sys/http/middleware"
+	"cleanbuddy-api/res/store"
+	"cleanbuddy-api/sys/graphql/gen"
+	"cleanbuddy-api/sys/graphql/scalar"
+	"cleanbuddy-api/sys/http/middleware"
 )
 
 // FIELD RESOLVERS

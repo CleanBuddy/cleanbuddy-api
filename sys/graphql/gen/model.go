@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"saas-starter-api/res/store"
+	"cleanbuddy-api/res/store"
 	"strconv"
 )
 

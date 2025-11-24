@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"saas-starter-api/res/mail"
+	"cleanbuddy-api/res/mail"
 )
 
 // SidemailService implements the MailService interface using Sidemail API

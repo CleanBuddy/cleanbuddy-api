@@ -1,10 +1,10 @@
-# SaaS Starter API
+# CleanBuddy API
 
-A production-ready Go backend template for building SaaS applications with GraphQL, PostgreSQL, and a service-oriented architecture.
+A production-ready Go backend for the CleanBuddy application, built with GraphQL, PostgreSQL, and a service-oriented architecture.
 
 ## Overview
 
-This is a batteries-included backend starter kit designed to help you build scalable SaaS applications quickly. It provides a solid foundation with authentication, multi-tenancy (teams), project management, and an asynchronous queue system for background jobs.
+This is the backend API for CleanBuddy, providing a solid foundation with authentication, multi-role user management (clients, cleaners, company admins), application processing, and comprehensive GraphQL API.
 
 ## Key Features
 
@@ -40,7 +40,7 @@ This is a batteries-included backend starter kit designed to help you build scal
 1. **Clone the repository**
 ```bash
 git clone <your-repo-url>
-cd saas-starter-api
+cd cleanbuddy-api
 ```
 
 2. **Install dependencies**
@@ -99,7 +99,7 @@ GraphQL Playground (dev only): `http://localhost:8080/api/playground`
 ## Project Structure
 
 ```
-saas-starter-api/
+cleanbuddy-api/
 ├── cmd/                      # Application entry points
 │   └── main.go              # Main server entry point
 ├── api/                      # HTTP handlers
@@ -163,21 +163,23 @@ PostgreSQL Database
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
-## Multi-Tenant Model
+## User Roles & Application System
 
-The template includes a built-in multi-tenant hierarchy:
+CleanBuddy supports multiple user roles with an application-based approval workflow:
 
 ```
-User (owner)
-  └── Team (owned by user)
-      ├── Team Members (users with roles)
-      └── Projects (belongs to team)
+User Roles:
+  ├── Client (default for new users)
+  ├── Cleaner (approved via application)
+  ├── Company Admin (approved via application)
+  └── Global Admin (manually assigned)
 ```
 
-- **Users** can own multiple teams and be members of other teams
-- **Teams** have one owner and multiple members
-- **Projects** belong to teams (access controlled by team membership)
-- **Invitation Codes** for closed beta access control
+- **Clients** can browse and book cleaning services
+- **Cleaners** can apply to become service providers
+- **Company Admins** can manage their cleaning company
+- **Global Admins** can review and approve applications
+- **Application System** for role upgrade requests with admin review
 
 ## Core Features
 

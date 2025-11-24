@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"saas-starter-api/res/store"
+	"cleanbuddy-api/res/store"
 
 	"gorm.io/gorm"
 )

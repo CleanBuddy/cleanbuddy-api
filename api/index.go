@@ -7,15 +7,15 @@ import (
 	"sync"
 	"time"
 
-	"saas-starter-api/res/auth"
-	"saas-starter-api/res/mail"
-	"saas-starter-api/res/mail/sidemail"
-	"saas-starter-api/res/notification"
-	"saas-starter-api/res/notification/slack"
-	"saas-starter-api/res/store"
-	"saas-starter-api/res/store/postgresql"
-	"saas-starter-api/sys/graphql"
-	"saas-starter-api/sys/http/middleware"
+	"cleanbuddy-api/res/auth"
+	"cleanbuddy-api/res/mail"
+	"cleanbuddy-api/res/mail/sidemail"
+	"cleanbuddy-api/res/notification"
+	"cleanbuddy-api/res/notification/slack"
+	"cleanbuddy-api/res/store"
+	"cleanbuddy-api/res/store/postgresql"
+	"cleanbuddy-api/sys/graphql"
+	"cleanbuddy-api/sys/http/middleware"
 )
 
 var logger = log.New(os.Stdout, "", log.LstdFlags|log.LUTC|log.Llongfile)

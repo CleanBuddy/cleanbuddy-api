@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"saas-starter-api/sys/http/middleware"
+	"cleanbuddy-api/sys/http/middleware"
 
 	"github.com/99designs/gqlgen/graphql"
 )

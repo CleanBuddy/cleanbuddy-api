@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"saas-starter-api/res/store"
-	"saas-starter-api/sys/graphql/gen"
-	"saas-starter-api/sys/http/middleware"
+	"cleanbuddy-api/res/store"
+	"cleanbuddy-api/sys/graphql/gen"
+	"cleanbuddy-api/sys/http/middleware"
 
 	"github.com/rs/xid"
 )

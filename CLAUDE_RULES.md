@@ -1,4 +1,4 @@
-# SaaS Starter API - Development Rules for Claude
+# CleanBuddy API - Development Rules for Claude
 
 ## 🏗️ ARCHITECTURE: SERVICE-ORIENTED DESIGN (MANDATORY)
 
