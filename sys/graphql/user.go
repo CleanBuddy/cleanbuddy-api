@@ -135,3 +135,47 @@ func (mr *mutationResolver) UpdateCurrentUser(ctx context.Context, input gen.Upd
 	return updatedUser, nil
 }
 
+func (mr *mutationResolver) UpdateUserRole(ctx context.Context, role store.UserRole) (*store.User, error) {
+	currentUser := middleware.GetCurrentUser(ctx)
+	if currentUser == nil {
+		return nil, errors.New("access forbidden, authorization required")
+	}
+
+	// Define valid role transitions
+	validTransitions := map[store.UserRole][]store.UserRole{
+		store.UserRoleClient:          {store.UserRolePendingApplication},
+		store.UserRoleRejectedCleaner: {store.UserRolePendingApplication},
+	}
+
+	newRole := role
+
+	// Validate transition
+	allowedRoles, exists := validTransitions[currentUser.Role]
+	if !exists {
+		mr.Logger.Printf("Role transition not allowed from %s", currentUser.Role)
+		return nil, errors.New("role transition not allowed from your current role")
+	}
+
+	isValid := false
+	for _, allowed := range allowedRoles {
+		if newRole == allowed {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		mr.Logger.Printf("Cannot transition from %s to %s", currentUser.Role, newRole)
+		return nil, errors.New("cannot transition to the requested role")
+	}
+
+	// Update role
+	updatedUser, err := mr.Store.Users().Update(ctx, currentUser.ID, nil, &newRole)
+	if err != nil {
+		mr.Logger.Printf("Error updating user role: %s", err)
+		return nil, errors.New("error updating user role")
+	}
+
+	return updatedUser, nil
+}
+

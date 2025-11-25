@@ -1,5 +1,8 @@
 enum UserRole {
     CLIENT
+    PENDING_APPLICATION
+    PENDING_CLEANER
+    REJECTED_CLEANER
     CLEANER
     COMPANY_ADMIN
     GLOBAL_ADMIN
@@ -41,4 +44,5 @@ extend type Mutation {
     signOut: Void! @authRequired
     deleteCurrentUser: Void! @authRequired
     updateCurrentUser(input: UpdateCurrentUserInput!): User! @authRequired
+    updateUserRole(role: UserRole!): User! @authRequired
 }

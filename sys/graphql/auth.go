@@ -82,7 +82,7 @@ func (mr *mutationResolver) AuthWithRefreshToken(ctx context.Context, token stri
 	return &gen.AuthResult{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code string, kind gen.AuthIdentityKind) (*gen.AuthResult, error) {
+func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code string, kind gen.AuthIdentityKind, intent *string) (*gen.AuthResult, error) {
 	currentUser := middleware.GetCurrentUser(ctx)
 	if currentUser != nil {
 		return nil, errors.New("access forbidden, session already associated with a user")
@@ -128,7 +128,15 @@ func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code s
 			userName = *userMetadata.DisplayName
 		}
 
-		newUser, err := mr.Store.Users().Create(ctx, userID, userName, userMetadata.Email, store.UserRoleClient, googleIdentity)
+		// Determine role based on intent
+		var userRole store.UserRole
+		if intent != nil && *intent == "cleaner" {
+			userRole = store.UserRolePendingApplication
+		} else {
+			userRole = store.UserRoleClient
+		}
+
+		newUser, err := mr.Store.Users().Create(ctx, userID, userName, userMetadata.Email, userRole, googleIdentity)
 		if err != nil {
 			mr.Logger.Printf("Error creating user: %s", err)
 			return nil, errors.New("error creating user")

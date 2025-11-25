@@ -30,7 +30,13 @@ func (uStore *userStore) Create(
 	newUser := &store.User{ID: ID}
 
 	// Role validation
-	if role != store.UserRoleClient && role != store.UserRoleCleaner && role != store.UserRoleCompanyAdmin && role != store.UserRoleGlobalAdmin {
+	if role != store.UserRoleClient &&
+	   role != store.UserRolePendingApplication &&
+	   role != store.UserRolePendingCleaner &&
+	   role != store.UserRoleRejectedCleaner &&
+	   role != store.UserRoleCleaner &&
+	   role != store.UserRoleCompanyAdmin &&
+	   role != store.UserRoleGlobalAdmin {
 		return nil, fmt.Errorf("invalid user role (%s)", role)
 	}
 	newUser.Role = role
@@ -108,7 +114,13 @@ func (uStore *userStore) Update(ctx context.Context, userID string, displayName 
 
 	// Validate and add role if provided
 	if role != nil {
-		if *role != store.UserRoleClient && *role != store.UserRoleCleaner && *role != store.UserRoleCompanyAdmin && *role != store.UserRoleGlobalAdmin {
+		if *role != store.UserRoleClient &&
+		   *role != store.UserRolePendingApplication &&
+		   *role != store.UserRolePendingCleaner &&
+		   *role != store.UserRoleRejectedCleaner &&
+		   *role != store.UserRoleCleaner &&
+		   *role != store.UserRoleCompanyAdmin &&
+		   *role != store.UserRoleGlobalAdmin {
 			return nil, fmt.Errorf("invalid user role (%s)", *role)
 		}
 

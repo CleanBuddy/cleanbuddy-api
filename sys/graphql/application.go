@@ -141,6 +141,14 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
+	// Check if user is in a valid state to submit application
+	if input.ApplicationType == store.ApplicationTypeCleaner {
+		// Only CLIENT or PENDING_APPLICATION roles can submit cleaner applications
+		if !currentUser.IsClient() && !currentUser.IsPendingApplication() {
+			return nil, errors.New("you cannot submit a cleaner application in your current state")
+		}
+	}
+
 	// Check if user already has a pending application of this type
 	existingApps, err := mr.Store.Applications().GetByUserAndType(ctx, currentUser.ID, input.ApplicationType)
 	if err != nil {
@@ -280,6 +288,15 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		return nil, errors.New("error creating application")
 	}
 
+	// Update user role to PENDING_CLEANER for cleaner applications
+	if input.ApplicationType == store.ApplicationTypeCleaner {
+		newRole := store.UserRolePendingCleaner
+		if _, err := mr.Store.Users().Update(ctx, currentUser.ID, nil, &newRole); err != nil {
+			mr.Logger.Printf("Error updating user role to pending_cleaner: %s", err)
+			// Don't fail the application submission, just log the error
+		}
+	}
+
 	// Notify admins about new application (if notification service available)
 	if mr.NotificationService != nil {
 		notifMsg := fmt.Sprintf("New %s application from %s (%s)", input.ApplicationType, currentUser.DisplayName, currentUser.Email)
@@ -374,6 +391,16 @@ func (mr *mutationResolver) RejectApplication(ctx context.Context, applicationID
 	if err := mr.Store.Applications().UpdateStatusWithReason(ctx, applicationID, store.ApplicationStatusRejected, currentUser.ID, reason); err != nil {
 		mr.Logger.Printf("Error updating application status: %s", err)
 		return nil, errors.New("error rejecting application")
+	}
+
+	// Set user role to REJECTED_CLEANER if they were PENDING_CLEANER
+	applicant, err := mr.Store.Users().Get(ctx, application.UserID)
+	if err == nil && applicant != nil && applicant.IsPendingCleaner() {
+		rejectedRole := store.UserRoleRejectedCleaner
+		if _, err := mr.Store.Users().Update(ctx, application.UserID, nil, &rejectedRole); err != nil {
+			mr.Logger.Printf("Error setting user role to rejected_cleaner: %s", err)
+			// Don't fail the rejection, just log the error
+		}
 	}
 
 	// Fetch the updated application

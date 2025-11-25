@@ -233,7 +233,7 @@ type ComplexityRoot struct {
 		AddCleanerResponse       func(childComplexity int, input AddCleanerResponseInput) int
 		AddServiceArea           func(childComplexity int, input CreateServiceAreaInput) int
 		ApproveApplication       func(childComplexity int, applicationID string) int
-		AuthWithIdentityProvider func(childComplexity int, code string, kind AuthIdentityKind) int
+		AuthWithIdentityProvider func(childComplexity int, code string, kind AuthIdentityKind, intent *string) int
 		AuthWithRefreshToken     func(childComplexity int, token string) int
 		BulkCreateAvailability   func(childComplexity int, inputs []*CreateAvailabilityInput) int
 		CancelBooking            func(childComplexity int, input CancelBookingInput) int
@@ -273,6 +273,7 @@ type ComplexityRoot struct {
 		UpdateReview             func(childComplexity int, input UpdateReviewInput) int
 		UpdateServiceArea        func(childComplexity int, input UpdateServiceAreaInput) int
 		UpdateServiceDefinition  func(childComplexity int, input UpdateServiceDefinitionInput) int
+		UpdateUserRole           func(childComplexity int, role store.UserRole) int
 	}
 
 	PayoutBatch struct {
@@ -520,7 +521,7 @@ type MutationResolver interface {
 	SubmitApplication(ctx context.Context, input SubmitApplicationInput) (*store.Application, error)
 	ApproveApplication(ctx context.Context, applicationID string) (*store.Application, error)
 	RejectApplication(ctx context.Context, applicationID string, reason *string) (*store.Application, error)
-	AuthWithIdentityProvider(ctx context.Context, code string, kind AuthIdentityKind) (*AuthResult, error)
+	AuthWithIdentityProvider(ctx context.Context, code string, kind AuthIdentityKind, intent *string) (*AuthResult, error)
 	AuthWithRefreshToken(ctx context.Context, token string) (*AuthResult, error)
 	CreateAvailability(ctx context.Context, input CreateAvailabilityInput) (*store.Availability, error)
 	UpdateAvailability(ctx context.Context, input UpdateAvailabilityInput) (*store.Availability, error)
@@ -556,6 +557,7 @@ type MutationResolver interface {
 	SignOut(ctx context.Context) (*scalar.Void, error)
 	DeleteCurrentUser(ctx context.Context) (*scalar.Void, error)
 	UpdateCurrentUser(ctx context.Context, input UpdateCurrentUserInput) (*store.User, error)
+	UpdateUserRole(ctx context.Context, role store.UserRole) (*store.User, error)
 }
 type QueryResolver interface {
 	Address(ctx context.Context, id string) (*store.Address, error)
@@ -1508,7 +1510,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AuthWithIdentityProvider(childComplexity, args["code"].(string), args["kind"].(AuthIdentityKind)), true
+		return e.complexity.Mutation.AuthWithIdentityProvider(childComplexity, args["code"].(string), args["kind"].(AuthIdentityKind), args["intent"].(*string)), true
 	case "Mutation.authWithRefreshToken":
 		if e.complexity.Mutation.AuthWithRefreshToken == nil {
 			break
@@ -1923,6 +1925,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateServiceDefinition(childComplexity, args["input"].(UpdateServiceDefinitionInput)), true
+	case "Mutation.updateUserRole":
+		if e.complexity.Mutation.UpdateUserRole == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUserRole_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUserRole(childComplexity, args["role"].(store.UserRole)), true
 
 	case "PayoutBatch.completedAt":
 		if e.complexity.PayoutBatch.CompletedAt == nil {
@@ -3514,7 +3527,7 @@ extend type Mutation {
     # Used for both the initial sign-up and subsequent sing-ins, when the client has no information about the user session
     # This flow will trigger the OAuth workflow, where the client will hand off the request to the appropriate social provider
     # in order to obtain the authorization code
-    authWithIdentityProvider(code: String!, kind: AuthIdentityKind!): AuthResult!
+    authWithIdentityProvider(code: String!, kind: AuthIdentityKind!, intent: String): AuthResult!
     # Used for when an existing user session is already associated with the client
     authWithRefreshToken(token: String!): AuthResult!
 }
@@ -4543,6 +4556,9 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../user.graphql", Input: `enum UserRole {
     CLIENT
+    PENDING_APPLICATION
+    PENDING_CLEANER
+    REJECTED_CLEANER
     CLEANER
     COMPANY_ADMIN
     GLOBAL_ADMIN
@@ -4584,6 +4600,7 @@ extend type Mutation {
     signOut: Void! @authRequired
     deleteCurrentUser: Void! @authRequired
     updateCurrentUser(input: UpdateCurrentUserInput!): User! @authRequired
+    updateUserRole(role: UserRole!): User! @authRequired
 }
 `, BuiltIn: false},
 }
@@ -4639,6 +4656,11 @@ func (ec *executionContext) field_Mutation_authWithIdentityProvider_args(ctx con
 		return nil, err
 	}
 	args["kind"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "intent", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["intent"] = arg2
 	return args, nil
 }
 
@@ -5055,6 +5077,17 @@ func (ec *executionContext) field_Mutation_updateServiceDefinition_args(ctx cont
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserRole_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNUserRole2cleanbuddyᚑapiᚋresᚋstoreᚐUserRole)
+	if err != nil {
+		return nil, err
+	}
+	args["role"] = arg0
 	return args, nil
 }
 
@@ -10942,7 +10975,7 @@ func (ec *executionContext) _Mutation_authWithIdentityProvider(ctx context.Conte
 		ec.fieldContext_Mutation_authWithIdentityProvider,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AuthWithIdentityProvider(ctx, fc.Args["code"].(string), fc.Args["kind"].(AuthIdentityKind))
+			return ec.resolvers.Mutation().AuthWithIdentityProvider(ctx, fc.Args["code"].(string), fc.Args["kind"].(AuthIdentityKind), fc.Args["intent"].(*string))
 		},
 		nil,
 		ec.marshalNAuthResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAuthResult,
@@ -14159,6 +14192,74 @@ func (ec *executionContext) fieldContext_Mutation_updateCurrentUser(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateCurrentUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateUserRole(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateUserRole,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateUserRole(ctx, fc.Args["role"].(store.UserRole))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.User
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateUserRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "applications":
+				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateUserRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -27439,6 +27540,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateCurrentUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateCurrentUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateUserRole":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateUserRole(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

@@ -5,16 +5,19 @@ import "time"
 type UserRole string
 
 const (
-	UserRoleClient       UserRole = "client"
-	UserRoleCleaner      UserRole = "cleaner"
-	UserRoleCompanyAdmin UserRole = "company_admin"
-	UserRoleGlobalAdmin  UserRole = "global_admin"
+	UserRoleClient             UserRole = "CLIENT"
+	UserRolePendingApplication UserRole = "PENDING_APPLICATION"
+	UserRolePendingCleaner     UserRole = "PENDING_CLEANER"
+	UserRoleRejectedCleaner    UserRole = "REJECTED_CLEANER"
+	UserRoleCleaner            UserRole = "CLEANER"
+	UserRoleCompanyAdmin       UserRole = "COMPANY_ADMIN"
+	UserRoleGlobalAdmin        UserRole = "GLOBAL_ADMIN"
 )
 
 type User struct {
 	ID          string   `gorm:"primaryKey;size:50;unique"`
 	DisplayName string   `gorm:"size:50;not null"`
-	Role        UserRole `gorm:"size:20;not null;default:'client'"`
+	Role        UserRole `gorm:"size:20;not null;default:'CLIENT'"`
 
 	GoogleIdentity *string `gorm:"size:256;unique"`
 	Email          string  `gorm:"size:256;not null"`
@@ -41,4 +44,19 @@ func (u *User) IsCleaner() bool {
 // IsClient checks if the user is a basic client
 func (u *User) IsClient() bool {
 	return u.Role == UserRoleClient
+}
+
+// IsPendingCleaner checks if the user has a pending cleaner application
+func (u *User) IsPendingCleaner() bool {
+	return u.Role == UserRolePendingCleaner
+}
+
+// IsRejectedCleaner checks if the user has a rejected cleaner application
+func (u *User) IsRejectedCleaner() bool {
+	return u.Role == UserRoleRejectedCleaner
+}
+
+// IsPendingApplication checks if the user is waiting to submit application
+func (u *User) IsPendingApplication() bool {
+	return u.Role == UserRolePendingApplication
 }
