@@ -42,7 +42,8 @@ var logger = log.New(os.Stdout, "", log.LstdFlags|log.LUTC|log.Llongfile)
 // - SLACK_TIMEOUT_SECONDS: Timeout for notification API requests in seconds (default: 5)
 // - GCS_BUCKET_NAME: Google Cloud Storage bucket name for document uploads (optional)
 // - GCS_PROJECT_ID: Google Cloud project ID (optional)
-// - GOOGLE_APPLICATION_CREDENTIALS: Path to GCS service account credentials file (optional)
+// - GOOGLE_APPLICATION_CREDENTIALS_JSON: GCS service account credentials as JSON string (for Vercel/serverless, optional)
+// - GOOGLE_APPLICATION_CREDENTIALS: Path to GCS service account credentials file (for local development, optional)
 
 // Global service instances initialized once
 var (
@@ -163,10 +164,15 @@ func configStorage() *storage.GCSService {
 		return nil
 	}
 
-	credentialsPath := readOptionalEnvVar("GOOGLE_APPLICATION_CREDENTIALS", "")
+	// Try GOOGLE_APPLICATION_CREDENTIALS_JSON first (for Vercel/serverless)
+	// then fall back to GOOGLE_APPLICATION_CREDENTIALS (for local file path)
+	credentials := readOptionalEnvVar("GOOGLE_APPLICATION_CREDENTIALS_JSON", "")
+	if credentials == "" {
+		credentials = readOptionalEnvVar("GOOGLE_APPLICATION_CREDENTIALS", "")
+	}
 
 	ctx := context.Background()
-	gcsService, err := storage.NewGCSService(ctx, bucketName, projectID, credentialsPath)
+	gcsService, err := storage.NewGCSService(ctx, bucketName, projectID, credentials)
 	if err != nil {
 		logger.Printf("Failed to initialize GCS storage service: %v. Storage service disabled.", err)
 		return nil

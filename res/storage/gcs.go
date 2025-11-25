@@ -21,12 +21,23 @@ type GCSService struct {
 }
 
 // NewGCSService creates a new Google Cloud Storage service
+// credentialsPath can be either:
+// - A file path (for local development)
+// - JSON credentials as a string (for serverless environments like Vercel)
+// - Empty string to use default credentials
 func NewGCSService(ctx context.Context, bucketName, projectID, credentialsPath string) (*GCSService, error) {
 	var client *storage.Client
 	var err error
 
 	if credentialsPath != "" {
-		client, err = storage.NewClient(ctx, option.WithCredentialsFile(credentialsPath))
+		// Try to determine if this is a JSON string or a file path
+		if strings.HasPrefix(strings.TrimSpace(credentialsPath), "{") {
+			// Looks like JSON credentials string
+			client, err = storage.NewClient(ctx, option.WithCredentialsJSON([]byte(credentialsPath)))
+		} else {
+			// Treat as file path
+			client, err = storage.NewClient(ctx, option.WithCredentialsFile(credentialsPath))
+		}
 	} else {
 		// Use default credentials (for GCE, Cloud Run, etc.)
 		client, err = storage.NewClient(ctx)
