@@ -8,16 +8,16 @@ import (
 type ApplicationType string
 
 const (
-	ApplicationTypeCleaner      ApplicationType = "cleaner"
-	ApplicationTypeCompanyAdmin ApplicationType = "company_admin"
+	ApplicationTypeCleaner      ApplicationType = "CLEANER"
+	ApplicationTypeCompanyAdmin ApplicationType = "COMPANY_ADMIN"
 )
 
 type ApplicationStatus string
 
 const (
-	ApplicationStatusPending  ApplicationStatus = "pending"
-	ApplicationStatusApproved ApplicationStatus = "approved"
-	ApplicationStatusRejected ApplicationStatus = "rejected"
+	ApplicationStatusPending  ApplicationStatus = "PENDING"
+	ApplicationStatusApproved ApplicationStatus = "APPROVED"
+	ApplicationStatusRejected ApplicationStatus = "REJECTED"
 )
 
 type CompanyInfo struct {
@@ -45,7 +45,7 @@ type Application struct {
 	UserID string        `gorm:"size:50;not null;index:idx_applications_user_status"`
 
 	ApplicationType ApplicationType   `gorm:"size:20;not null"`
-	Status          ApplicationStatus `gorm:"size:20;not null;default:'pending';index:idx_applications_user_status"`
+	Status          ApplicationStatus `gorm:"size:20;not null;default:'PENDING';index:idx_applications_user_status"`
 
 	Message string `gorm:"type:text"` // Expandable field for future structured data (JSON or text)
 

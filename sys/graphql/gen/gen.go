@@ -3423,14 +3423,14 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../application.graphql", Input: `enum ApplicationType {
-    cleaner
-    company_admin
+    CLEANER
+    COMPANY_ADMIN
 }
 
 enum ApplicationStatus {
-    pending
-    approved
-    rejected
+    PENDING
+    APPROVED
+    REJECTED
 }
 
 input CompanyInfoInput {
