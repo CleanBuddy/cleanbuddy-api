@@ -13,6 +13,12 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type AcceptCleanerInviteResult struct {
+	Success bool           `json:"success"`
+	User    *store.User    `json:"user"`
+	Company *store.Company `json:"company"`
+}
+
 type AddCleanerResponseInput struct {
 	ReviewID string `json:"reviewId"`
 	Response string `json:"response"`
@@ -82,6 +88,11 @@ type CleanerEarnings struct {
 	CompletedBookings         int    `json:"completedBookings"`
 	AverageEarningsPerBooking int    `json:"averageEarningsPerBooking"`
 	PendingPayouts            int    `json:"pendingPayouts"`
+}
+
+type CleanerInviteResult struct {
+	Invite    *store.CleanerInvite `json:"invite"`
+	InviteURL string               `json:"inviteUrl"`
 }
 
 type CleanerProfileConnection struct {
@@ -186,6 +197,12 @@ type CreateBookingInput struct {
 type CreateBookingUserInput struct {
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email"`
+}
+
+type CreateCleanerInviteInput struct {
+	Email         *string `json:"email,omitempty"`
+	Message       *string `json:"message,omitempty"`
+	ExpiresInDays *int    `json:"expiresInDays,omitempty"`
 }
 
 type CreateCleanerProfileInput struct {
@@ -418,6 +435,13 @@ type UserConnection struct {
 type UserEdge struct {
 	Node   *store.User `json:"node"`
 	Cursor string      `json:"cursor"`
+}
+
+type ValidateCleanerInviteResult struct {
+	Valid        bool                 `json:"valid"`
+	Invite       *store.CleanerInvite `json:"invite,omitempty"`
+	Company      *store.Company       `json:"company,omitempty"`
+	ErrorMessage *string              `json:"errorMessage,omitempty"`
 }
 
 type AuthIdentityKind string

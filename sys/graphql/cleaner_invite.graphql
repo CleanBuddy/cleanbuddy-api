@@ -1,0 +1,73 @@
+enum CleanerInviteStatus {
+    PENDING
+    ACCEPTED
+    EXPIRED
+    REVOKED
+}
+
+type CleanerInvite {
+    id: ID!
+    token: String!
+    company: Company! @goField(forceResolver: true)
+    createdBy: User! @goField(forceResolver: true)
+    email: String
+    message: String
+    status: CleanerInviteStatus!
+    acceptedBy: User @goField(forceResolver: true)
+    acceptedAt: Time
+    expiresAt: Time!
+    createdAt: Time!
+}
+
+type CleanerInviteResult {
+    invite: CleanerInvite!
+    inviteUrl: String!
+}
+
+type ValidateCleanerInviteResult {
+    valid: Boolean!
+    invite: CleanerInvite
+    company: Company
+    errorMessage: String
+}
+
+type AcceptCleanerInviteResult {
+    success: Boolean!
+    user: User!
+    company: Company!
+}
+
+input CreateCleanerInviteInput {
+    email: String
+    message: String
+    expiresInDays: Int
+}
+
+## QUERIES
+
+extend type Query {
+    # Validate an invite token (public - no auth required)
+    validateCleanerInviteToken(token: String!): ValidateCleanerInviteResult!
+
+    # Get a specific invite by ID (company admin only)
+    cleanerInvite(id: ID!): CleanerInvite @authRequired
+
+    # List all invites for current user's company (company admin only)
+    myCompanyInvites: [CleanerInvite!]! @authRequired
+
+    # List all cleaners for current user's company (company admin only)
+    myCompanyCleaners: [CleanerProfile!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create a new cleaner invite (company admin only)
+    createCleanerInvite(input: CreateCleanerInviteInput): CleanerInviteResult! @authRequired
+
+    # Accept a cleaner invite (authenticated users only)
+    acceptCleanerInvite(token: String!): AcceptCleanerInviteResult! @authRequired
+
+    # Revoke an invite (company admin only)
+    revokeCleanerInvite(id: ID!): CleanerInvite! @authRequired
+}

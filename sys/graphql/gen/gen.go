@@ -42,6 +42,7 @@ type Config struct {
 type ResolverRoot interface {
 	Application() ApplicationResolver
 	Booking() BookingResolver
+	CleanerInvite() CleanerInviteResolver
 	CleanerProfile() CleanerProfileResolver
 	Company() CompanyResolver
 	Mutation() MutationResolver
@@ -54,6 +55,12 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AcceptCleanerInviteResult struct {
+		Company func(childComplexity int) int
+		Success func(childComplexity int) int
+		User    func(childComplexity int) int
+	}
+
 	Address struct {
 		AccessInstructions func(childComplexity int) int
 		Apartment          func(childComplexity int) int
@@ -181,6 +188,25 @@ type ComplexityRoot struct {
 		TotalEarnings             func(childComplexity int) int
 	}
 
+	CleanerInvite struct {
+		AcceptedAt func(childComplexity int) int
+		AcceptedBy func(childComplexity int) int
+		Company    func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		CreatedBy  func(childComplexity int) int
+		Email      func(childComplexity int) int
+		ExpiresAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Message    func(childComplexity int) int
+		Status     func(childComplexity int) int
+		Token      func(childComplexity int) int
+	}
+
+	CleanerInviteResult struct {
+		Invite    func(childComplexity int) int
+		InviteURL func(childComplexity int) int
+	}
+
 	CleanerProfile struct {
 		Availability      func(childComplexity int) int
 		AverageRating     func(childComplexity int) int
@@ -255,6 +281,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AcceptCleanerInvite      func(childComplexity int, token string) int
 		AddCleanerResponse       func(childComplexity int, input AddCleanerResponseInput) int
 		AddServiceArea           func(childComplexity int, input CreateServiceAreaInput) int
 		ApproveApplication       func(childComplexity int, applicationID string) int
@@ -268,6 +295,7 @@ type ComplexityRoot struct {
 		CreateAddress            func(childComplexity int, input CreateAddressInput) int
 		CreateAvailability       func(childComplexity int, input CreateAvailabilityInput) int
 		CreateBooking            func(childComplexity int, input CreateBookingInput) int
+		CreateCleanerInvite      func(childComplexity int, input *CreateCleanerInviteInput) int
 		CreateCleanerProfile     func(childComplexity int, input CreateCleanerProfileInput) int
 		CreatePayoutBatch        func(childComplexity int, input CreatePayoutBatchInput) int
 		CreateReview             func(childComplexity int, input CreateReviewInput) int
@@ -284,6 +312,7 @@ type ComplexityRoot struct {
 		ModerateReview           func(childComplexity int, input ModerateReviewInput) int
 		ProcessPayoutBatch       func(childComplexity int, id string) int
 		RejectApplication        func(childComplexity int, applicationID string, reason *string) int
+		RevokeCleanerInvite      func(childComplexity int, id string) int
 		SetDefaultAddress        func(childComplexity int, id string) int
 		SignOut                  func(childComplexity int) int
 		StartBooking             func(childComplexity int, id string) int
@@ -330,6 +359,7 @@ type ComplexityRoot struct {
 		AvailableCleaners            func(childComplexity int, date time.Time, startTime string, duration float64, city string, neighborhood *string, postalCode *string, filters *CleanerProfileFiltersInput) int
 		Booking                      func(childComplexity int, id string) int
 		CalculateServicePrice        func(childComplexity int, input CalculateServicePriceInput) int
+		CleanerInvite                func(childComplexity int, id string) int
 		CleanerProfile               func(childComplexity int, id string) int
 		CleanerProfileByUserID       func(childComplexity int, userID string) int
 		CleanersByPostalCode         func(childComplexity int, postalCode string) int
@@ -345,6 +375,8 @@ type ComplexityRoot struct {
 		MyBookings                   func(childComplexity int, filters *BookingFiltersInput, limit *int, offset *int, orderBy *string) int
 		MyCleanerProfile             func(childComplexity int) int
 		MyCompany                    func(childComplexity int) int
+		MyCompanyCleaners            func(childComplexity int) int
+		MyCompanyInvites             func(childComplexity int) int
 		MyDefaultAddress             func(childComplexity int) int
 		MyEarnings                   func(childComplexity int, startDate *time.Time, endDate *time.Time) int
 		MyJobs                       func(childComplexity int, filters *BookingFiltersInput, limit *int, offset *int, orderBy *string) int
@@ -369,6 +401,7 @@ type ComplexityRoot struct {
 		TransactionsByBooking        func(childComplexity int, bookingID string) int
 		TransactionsDueForPayout     func(childComplexity int, beforeDate time.Time) int
 		UpcomingBookings             func(childComplexity int, limit *int) int
+		ValidateCleanerInviteToken   func(childComplexity int, token string) int
 	}
 
 	Review struct {
@@ -524,6 +557,13 @@ type ComplexityRoot struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
+
+	ValidateCleanerInviteResult struct {
+		Company      func(childComplexity int) int
+		ErrorMessage func(childComplexity int) int
+		Invite       func(childComplexity int) int
+		Valid        func(childComplexity int) int
+	}
 }
 
 type ApplicationResolver interface {
@@ -537,7 +577,15 @@ type BookingResolver interface {
 	Review(ctx context.Context, obj *store.Booking) (*store.Review, error)
 	Transaction(ctx context.Context, obj *store.Booking) (*store.Transaction, error)
 }
+type CleanerInviteResolver interface {
+	Company(ctx context.Context, obj *store.CleanerInvite) (*store.Company, error)
+	CreatedBy(ctx context.Context, obj *store.CleanerInvite) (*store.User, error)
+
+	AcceptedBy(ctx context.Context, obj *store.CleanerInvite) (*store.User, error)
+}
 type CleanerProfileResolver interface {
+	User(ctx context.Context, obj *store.CleanerProfile) (*store.User, error)
+
 	Company(ctx context.Context, obj *store.CleanerProfile) (*store.Company, error)
 
 	ServiceAreas(ctx context.Context, obj *store.CleanerProfile) ([]*store.ServiceArea, error)
@@ -570,6 +618,9 @@ type MutationResolver interface {
 	CompleteBooking(ctx context.Context, id string, cleanerNotes *string) (*store.Booking, error)
 	CancelBooking(ctx context.Context, input CancelBookingInput) (*store.Booking, error)
 	MarkNoShow(ctx context.Context, id string) (*store.Booking, error)
+	CreateCleanerInvite(ctx context.Context, input *CreateCleanerInviteInput) (*CleanerInviteResult, error)
+	AcceptCleanerInvite(ctx context.Context, token string) (*AcceptCleanerInviteResult, error)
+	RevokeCleanerInvite(ctx context.Context, id string) (*store.CleanerInvite, error)
 	CreateCleanerProfile(ctx context.Context, input CreateCleanerProfileInput) (*store.CleanerProfile, error)
 	UpdateCleanerProfile(ctx context.Context, input UpdateCleanerProfileInput) (*store.CleanerProfile, error)
 	DeleteCleanerProfile(ctx context.Context) (*scalar.Void, error)
@@ -613,6 +664,10 @@ type QueryResolver interface {
 	MyJobs(ctx context.Context, filters *BookingFiltersInput, limit *int, offset *int, orderBy *string) (*BookingConnection, error)
 	UpcomingBookings(ctx context.Context, limit *int) ([]*store.Booking, error)
 	AllBookings(ctx context.Context, filters *BookingFiltersInput, limit *int, offset *int, orderBy *string) (*BookingConnection, error)
+	ValidateCleanerInviteToken(ctx context.Context, token string) (*ValidateCleanerInviteResult, error)
+	CleanerInvite(ctx context.Context, id string) (*store.CleanerInvite, error)
+	MyCompanyInvites(ctx context.Context) ([]*store.CleanerInvite, error)
+	MyCompanyCleaners(ctx context.Context) ([]*store.CleanerProfile, error)
 	CleanerProfile(ctx context.Context, id string) (*store.CleanerProfile, error)
 	CleanerProfileByUserID(ctx context.Context, userID string) (*store.CleanerProfile, error)
 	MyCleanerProfile(ctx context.Context) (*store.CleanerProfile, error)
@@ -671,6 +726,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AcceptCleanerInviteResult.company":
+		if e.complexity.AcceptCleanerInviteResult.Company == nil {
+			break
+		}
+
+		return e.complexity.AcceptCleanerInviteResult.Company(childComplexity), true
+	case "AcceptCleanerInviteResult.success":
+		if e.complexity.AcceptCleanerInviteResult.Success == nil {
+			break
+		}
+
+		return e.complexity.AcceptCleanerInviteResult.Success(childComplexity), true
+	case "AcceptCleanerInviteResult.user":
+		if e.complexity.AcceptCleanerInviteResult.User == nil {
+			break
+		}
+
+		return e.complexity.AcceptCleanerInviteResult.User(childComplexity), true
 
 	case "Address.accessInstructions":
 		if e.complexity.Address.AccessInstructions == nil {
@@ -1281,6 +1355,86 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CleanerEarnings.TotalEarnings(childComplexity), true
 
+	case "CleanerInvite.acceptedAt":
+		if e.complexity.CleanerInvite.AcceptedAt == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.AcceptedAt(childComplexity), true
+	case "CleanerInvite.acceptedBy":
+		if e.complexity.CleanerInvite.AcceptedBy == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.AcceptedBy(childComplexity), true
+	case "CleanerInvite.company":
+		if e.complexity.CleanerInvite.Company == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.Company(childComplexity), true
+	case "CleanerInvite.createdAt":
+		if e.complexity.CleanerInvite.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.CreatedAt(childComplexity), true
+	case "CleanerInvite.createdBy":
+		if e.complexity.CleanerInvite.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.CreatedBy(childComplexity), true
+	case "CleanerInvite.email":
+		if e.complexity.CleanerInvite.Email == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.Email(childComplexity), true
+	case "CleanerInvite.expiresAt":
+		if e.complexity.CleanerInvite.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.ExpiresAt(childComplexity), true
+	case "CleanerInvite.id":
+		if e.complexity.CleanerInvite.ID == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.ID(childComplexity), true
+	case "CleanerInvite.message":
+		if e.complexity.CleanerInvite.Message == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.Message(childComplexity), true
+	case "CleanerInvite.status":
+		if e.complexity.CleanerInvite.Status == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.Status(childComplexity), true
+	case "CleanerInvite.token":
+		if e.complexity.CleanerInvite.Token == nil {
+			break
+		}
+
+		return e.complexity.CleanerInvite.Token(childComplexity), true
+
+	case "CleanerInviteResult.invite":
+		if e.complexity.CleanerInviteResult.Invite == nil {
+			break
+		}
+
+		return e.complexity.CleanerInviteResult.Invite(childComplexity), true
+	case "CleanerInviteResult.inviteUrl":
+		if e.complexity.CleanerInviteResult.InviteURL == nil {
+			break
+		}
+
+		return e.complexity.CleanerInviteResult.InviteURL(childComplexity), true
+
 	case "CleanerProfile.availability":
 		if e.complexity.CleanerProfile.Availability == nil {
 			break
@@ -1634,6 +1788,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CompanyInfo.TaxID(childComplexity), true
 
+	case "Mutation.acceptCleanerInvite":
+		if e.complexity.Mutation.AcceptCleanerInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acceptCleanerInvite_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AcceptCleanerInvite(childComplexity, args["token"].(string)), true
 	case "Mutation.addCleanerResponse":
 		if e.complexity.Mutation.AddCleanerResponse == nil {
 			break
@@ -1777,6 +1942,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateBooking(childComplexity, args["input"].(CreateBookingInput)), true
+	case "Mutation.createCleanerInvite":
+		if e.complexity.Mutation.CreateCleanerInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCleanerInvite_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateCleanerInvite(childComplexity, args["input"].(*CreateCleanerInviteInput)), true
 	case "Mutation.createCleanerProfile":
 		if e.complexity.Mutation.CreateCleanerProfile == nil {
 			break
@@ -1943,6 +2119,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RejectApplication(childComplexity, args["applicationId"].(string), args["reason"].(*string)), true
+	case "Mutation.revokeCleanerInvite":
+		if e.complexity.Mutation.RevokeCleanerInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeCleanerInvite_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RevokeCleanerInvite(childComplexity, args["id"].(string)), true
 	case "Mutation.setDefaultAddress":
 		if e.complexity.Mutation.SetDefaultAddress == nil {
 			break
@@ -2315,6 +2502,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.CalculateServicePrice(childComplexity, args["input"].(CalculateServicePriceInput)), true
+	case "Query.cleanerInvite":
+		if e.complexity.Query.CleanerInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cleanerInvite_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CleanerInvite(childComplexity, args["id"].(string)), true
 	case "Query.cleanerProfile":
 		if e.complexity.Query.CleanerProfile == nil {
 			break
@@ -2450,6 +2648,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.MyCompany(childComplexity), true
+	case "Query.myCompanyCleaners":
+		if e.complexity.Query.MyCompanyCleaners == nil {
+			break
+		}
+
+		return e.complexity.Query.MyCompanyCleaners(childComplexity), true
+	case "Query.myCompanyInvites":
+		if e.complexity.Query.MyCompanyInvites == nil {
+			break
+		}
+
+		return e.complexity.Query.MyCompanyInvites(childComplexity), true
 	case "Query.myDefaultAddress":
 		if e.complexity.Query.MyDefaultAddress == nil {
 			break
@@ -2694,6 +2904,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.UpcomingBookings(childComplexity, args["limit"].(*int)), true
+	case "Query.validateCleanerInviteToken":
+		if e.complexity.Query.ValidateCleanerInviteToken == nil {
+			break
+		}
+
+		args, err := ec.field_Query_validateCleanerInviteToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ValidateCleanerInviteToken(childComplexity, args["token"].(string)), true
 
 	case "Review.booking":
 		if e.complexity.Review.Booking == nil {
@@ -3381,6 +3602,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UserEdge.Node(childComplexity), true
 
+	case "ValidateCleanerInviteResult.company":
+		if e.complexity.ValidateCleanerInviteResult.Company == nil {
+			break
+		}
+
+		return e.complexity.ValidateCleanerInviteResult.Company(childComplexity), true
+	case "ValidateCleanerInviteResult.errorMessage":
+		if e.complexity.ValidateCleanerInviteResult.ErrorMessage == nil {
+			break
+		}
+
+		return e.complexity.ValidateCleanerInviteResult.ErrorMessage(childComplexity), true
+	case "ValidateCleanerInviteResult.invite":
+		if e.complexity.ValidateCleanerInviteResult.Invite == nil {
+			break
+		}
+
+		return e.complexity.ValidateCleanerInviteResult.Invite(childComplexity), true
+	case "ValidateCleanerInviteResult.valid":
+		if e.complexity.ValidateCleanerInviteResult.Valid == nil {
+			break
+		}
+
+		return e.complexity.ValidateCleanerInviteResult.Valid(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -3404,6 +3650,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateBookingAddressInput,
 		ec.unmarshalInputCreateBookingInput,
 		ec.unmarshalInputCreateBookingUserInput,
+		ec.unmarshalInputCreateCleanerInviteInput,
 		ec.unmarshalInputCreateCleanerProfileInput,
 		ec.unmarshalInputCreatePayoutBatchInput,
 		ec.unmarshalInputCreateReviewInput,
@@ -4048,6 +4295,80 @@ extend type Mutation {
     markNoShow(id: ID!): Booking! @authRequired
 }
 `, BuiltIn: false},
+	{Name: "../cleaner_invite.graphql", Input: `enum CleanerInviteStatus {
+    PENDING
+    ACCEPTED
+    EXPIRED
+    REVOKED
+}
+
+type CleanerInvite {
+    id: ID!
+    token: String!
+    company: Company! @goField(forceResolver: true)
+    createdBy: User! @goField(forceResolver: true)
+    email: String
+    message: String
+    status: CleanerInviteStatus!
+    acceptedBy: User @goField(forceResolver: true)
+    acceptedAt: Time
+    expiresAt: Time!
+    createdAt: Time!
+}
+
+type CleanerInviteResult {
+    invite: CleanerInvite!
+    inviteUrl: String!
+}
+
+type ValidateCleanerInviteResult {
+    valid: Boolean!
+    invite: CleanerInvite
+    company: Company
+    errorMessage: String
+}
+
+type AcceptCleanerInviteResult {
+    success: Boolean!
+    user: User!
+    company: Company!
+}
+
+input CreateCleanerInviteInput {
+    email: String
+    message: String
+    expiresInDays: Int
+}
+
+## QUERIES
+
+extend type Query {
+    # Validate an invite token (public - no auth required)
+    validateCleanerInviteToken(token: String!): ValidateCleanerInviteResult!
+
+    # Get a specific invite by ID (company admin only)
+    cleanerInvite(id: ID!): CleanerInvite @authRequired
+
+    # List all invites for current user's company (company admin only)
+    myCompanyInvites: [CleanerInvite!]! @authRequired
+
+    # List all cleaners for current user's company (company admin only)
+    myCompanyCleaners: [CleanerProfile!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Create a new cleaner invite (company admin only)
+    createCleanerInvite(input: CreateCleanerInviteInput): CleanerInviteResult! @authRequired
+
+    # Accept a cleaner invite (authenticated users only)
+    acceptCleanerInvite(token: String!): AcceptCleanerInviteResult! @authRequired
+
+    # Revoke an invite (company admin only)
+    revokeCleanerInvite(id: ID!): CleanerInvite! @authRequired
+}
+`, BuiltIn: false},
 	{Name: "../cleaner_profile.graphql", Input: `enum CleanerTier {
     NEW
     STANDARD
@@ -4057,7 +4378,7 @@ extend type Mutation {
 
 type CleanerProfile {
     id: ID!
-    user: User!
+    user: User! @goField(forceResolver: true)
     userId: ID!
     company: Company @goField(forceResolver: true)
     companyId: ID
@@ -4885,6 +5206,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_acceptCleanerInvite_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "token", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addCleanerResponse_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5036,6 +5368,17 @@ func (ec *executionContext) field_Mutation_createBooking_args(ctx context.Contex
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBookingInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateBookingInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createCleanerInvite_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalOCreateCleanerInviteInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateCleanerInviteInput)
 	if err != nil {
 		return nil, err
 	}
@@ -5204,6 +5547,17 @@ func (ec *executionContext) field_Mutation_rejectApplication_args(ctx context.Co
 		return nil, err
 	}
 	args["reason"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_revokeCleanerInvite_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -5581,6 +5935,17 @@ func (ec *executionContext) field_Query_calculateServicePrice_args(ctx context.C
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_cleanerInvite_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -6023,6 +6388,17 @@ func (ec *executionContext) field_Query_upcomingBookings_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_validateCleanerInviteToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "token", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6074,6 +6450,147 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AcceptCleanerInviteResult_success(ctx context.Context, field graphql.CollectedField, obj *AcceptCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AcceptCleanerInviteResult_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AcceptCleanerInviteResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AcceptCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AcceptCleanerInviteResult_user(ctx context.Context, field graphql.CollectedField, obj *AcceptCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AcceptCleanerInviteResult_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AcceptCleanerInviteResult_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AcceptCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "applications":
+				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AcceptCleanerInviteResult_company(ctx context.Context, field graphql.CollectedField, obj *AcceptCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AcceptCleanerInviteResult_company,
+		func(ctx context.Context) (any, error) {
+			return obj.Company, nil
+		},
+		nil,
+		ec.marshalNCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AcceptCleanerInviteResult_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AcceptCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Address_id(ctx context.Context, field graphql.CollectedField, obj *store.Address) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -9439,6 +9956,475 @@ func (ec *executionContext) fieldContext_CleanerEarnings_pendingPayouts(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _CleanerInvite_id(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_token(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_token,
+		func(ctx context.Context) (any, error) {
+			return obj.Token, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_company(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_company,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.CleanerInvite().Company(ctx, obj)
+		},
+		nil,
+		ec.marshalNCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_createdBy(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_createdBy,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.CleanerInvite().CreatedBy(ctx, obj)
+		},
+		nil,
+		ec.marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "applications":
+				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_email(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_message(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_message,
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_status(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNCleanerInviteStatus2cleanbuddyᚑapiᚋresᚋstoreᚐCleanerInviteStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CleanerInviteStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_acceptedBy(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_acceptedBy,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.CleanerInvite().AcceptedBy(ctx, obj)
+		},
+		nil,
+		ec.marshalOUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_acceptedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "applications":
+				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_acceptedAt(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_acceptedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.AcceptedAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_acceptedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_expiresAt(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_expiresAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInvite_createdAt(ctx context.Context, field graphql.CollectedField, obj *store.CleanerInvite) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInvite_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInvite_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInviteResult_invite(ctx context.Context, field graphql.CollectedField, obj *CleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInviteResult_invite,
+		func(ctx context.Context) (any, error) {
+			return obj.Invite, nil
+		},
+		nil,
+		ec.marshalNCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInviteResult_invite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_CleanerInvite_token(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerInvite_company(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_CleanerInvite_createdBy(ctx, field)
+			case "email":
+				return ec.fieldContext_CleanerInvite_email(ctx, field)
+			case "message":
+				return ec.fieldContext_CleanerInvite_message(ctx, field)
+			case "status":
+				return ec.fieldContext_CleanerInvite_status(ctx, field)
+			case "acceptedBy":
+				return ec.fieldContext_CleanerInvite_acceptedBy(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_CleanerInvite_acceptedAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_CleanerInvite_expiresAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerInvite_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerInvite", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CleanerInviteResult_inviteUrl(ctx context.Context, field graphql.CollectedField, obj *CleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CleanerInviteResult_inviteUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.InviteURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CleanerInviteResult_inviteUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CleanerProfile_id(ctx context.Context, field graphql.CollectedField, obj *store.CleanerProfile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9475,7 +10461,7 @@ func (ec *executionContext) _CleanerProfile_user(ctx context.Context, field grap
 		field,
 		ec.fieldContext_CleanerProfile_user,
 		func(ctx context.Context) (any, error) {
-			return obj.User, nil
+			return ec.resolvers.CleanerProfile().User(ctx, obj)
 		},
 		nil,
 		ec.marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
@@ -9488,8 +10474,8 @@ func (ec *executionContext) fieldContext_CleanerProfile_user(_ context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "CleanerProfile",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -13336,6 +14322,206 @@ func (ec *executionContext) fieldContext_Mutation_markNoShow(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createCleanerInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createCleanerInvite,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateCleanerInvite(ctx, fc.Args["input"].(*CreateCleanerInviteInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *CleanerInviteResult
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerInviteResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createCleanerInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "invite":
+				return ec.fieldContext_CleanerInviteResult_invite(ctx, field)
+			case "inviteUrl":
+				return ec.fieldContext_CleanerInviteResult_inviteUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerInviteResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCleanerInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_acceptCleanerInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_acceptCleanerInvite,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().AcceptCleanerInvite(ctx, fc.Args["token"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *AcceptCleanerInviteResult
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNAcceptCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAcceptCleanerInviteResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_acceptCleanerInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_AcceptCleanerInviteResult_success(ctx, field)
+			case "user":
+				return ec.fieldContext_AcceptCleanerInviteResult_user(ctx, field)
+			case "company":
+				return ec.fieldContext_AcceptCleanerInviteResult_company(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AcceptCleanerInviteResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_acceptCleanerInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_revokeCleanerInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_revokeCleanerInvite,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RevokeCleanerInvite(ctx, fc.Args["id"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.CleanerInvite
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_revokeCleanerInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_CleanerInvite_token(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerInvite_company(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_CleanerInvite_createdBy(ctx, field)
+			case "email":
+				return ec.fieldContext_CleanerInvite_email(ctx, field)
+			case "message":
+				return ec.fieldContext_CleanerInvite_message(ctx, field)
+			case "status":
+				return ec.fieldContext_CleanerInvite_status(ctx, field)
+			case "acceptedBy":
+				return ec.fieldContext_CleanerInvite_acceptedBy(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_CleanerInvite_acceptedAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_CleanerInvite_expiresAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerInvite_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerInvite", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_revokeCleanerInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createCleanerProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -17081,6 +18267,297 @@ func (ec *executionContext) fieldContext_Query_allBookings(ctx context.Context, 
 	if fc.Args, err = ec.field_Query_allBookings_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_validateCleanerInviteToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_validateCleanerInviteToken,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().ValidateCleanerInviteToken(ctx, fc.Args["token"].(string))
+		},
+		nil,
+		ec.marshalNValidateCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐValidateCleanerInviteResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_validateCleanerInviteToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "valid":
+				return ec.fieldContext_ValidateCleanerInviteResult_valid(ctx, field)
+			case "invite":
+				return ec.fieldContext_ValidateCleanerInviteResult_invite(ctx, field)
+			case "company":
+				return ec.fieldContext_ValidateCleanerInviteResult_company(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_ValidateCleanerInviteResult_errorMessage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ValidateCleanerInviteResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_validateCleanerInviteToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_cleanerInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_cleanerInvite,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().CleanerInvite(ctx, fc.Args["id"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.CleanerInvite
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_cleanerInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_CleanerInvite_token(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerInvite_company(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_CleanerInvite_createdBy(ctx, field)
+			case "email":
+				return ec.fieldContext_CleanerInvite_email(ctx, field)
+			case "message":
+				return ec.fieldContext_CleanerInvite_message(ctx, field)
+			case "status":
+				return ec.fieldContext_CleanerInvite_status(ctx, field)
+			case "acceptedBy":
+				return ec.fieldContext_CleanerInvite_acceptedBy(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_CleanerInvite_acceptedAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_CleanerInvite_expiresAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerInvite_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerInvite", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_cleanerInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_myCompanyInvites(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_myCompanyInvites,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().MyCompanyInvites(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal []*store.CleanerInvite
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCleanerInvite2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInviteᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_myCompanyInvites(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_CleanerInvite_token(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerInvite_company(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_CleanerInvite_createdBy(ctx, field)
+			case "email":
+				return ec.fieldContext_CleanerInvite_email(ctx, field)
+			case "message":
+				return ec.fieldContext_CleanerInvite_message(ctx, field)
+			case "status":
+				return ec.fieldContext_CleanerInvite_status(ctx, field)
+			case "acceptedBy":
+				return ec.fieldContext_CleanerInvite_acceptedBy(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_CleanerInvite_acceptedAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_CleanerInvite_expiresAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerInvite_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerInvite", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_myCompanyCleaners(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_myCompanyCleaners,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().MyCompanyCleaners(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal []*store.CleanerProfile
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCleanerProfile2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerProfileᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_myCompanyCleaners(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerProfile_id(ctx, field)
+			case "user":
+				return ec.fieldContext_CleanerProfile_user(ctx, field)
+			case "userId":
+				return ec.fieldContext_CleanerProfile_userId(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerProfile_company(ctx, field)
+			case "companyId":
+				return ec.fieldContext_CleanerProfile_companyId(ctx, field)
+			case "bio":
+				return ec.fieldContext_CleanerProfile_bio(ctx, field)
+			case "profilePicture":
+				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
+			case "tier":
+				return ec.fieldContext_CleanerProfile_tier(ctx, field)
+			case "hourlyRate":
+				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
+			case "totalBookings":
+				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
+			case "completedBookings":
+				return ec.fieldContext_CleanerProfile_completedBookings(ctx, field)
+			case "cancelledBookings":
+				return ec.fieldContext_CleanerProfile_cancelledBookings(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_CleanerProfile_averageRating(ctx, field)
+			case "totalReviews":
+				return ec.fieldContext_CleanerProfile_totalReviews(ctx, field)
+			case "totalEarnings":
+				return ec.fieldContext_CleanerProfile_totalEarnings(ctx, field)
+			case "isActive":
+				return ec.fieldContext_CleanerProfile_isActive(ctx, field)
+			case "isAvailableToday":
+				return ec.fieldContext_CleanerProfile_isAvailableToday(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_CleanerProfile_isVerified(ctx, field)
+			case "verifiedAt":
+				return ec.fieldContext_CleanerProfile_verifiedAt(ctx, field)
+			case "backgroundCheck":
+				return ec.fieldContext_CleanerProfile_backgroundCheck(ctx, field)
+			case "identityVerified":
+				return ec.fieldContext_CleanerProfile_identityVerified(ctx, field)
+			case "serviceAreas":
+				return ec.fieldContext_CleanerProfile_serviceAreas(ctx, field)
+			case "reviews":
+				return ec.fieldContext_CleanerProfile_reviews(ctx, field)
+			case "availability":
+				return ec.fieldContext_CleanerProfile_availability(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerProfile_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CleanerProfile_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerProfile", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -23815,6 +25292,186 @@ func (ec *executionContext) fieldContext_UserEdge_cursor(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _ValidateCleanerInviteResult_valid(ctx context.Context, field graphql.CollectedField, obj *ValidateCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ValidateCleanerInviteResult_valid,
+		func(ctx context.Context) (any, error) {
+			return obj.Valid, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ValidateCleanerInviteResult_valid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ValidateCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ValidateCleanerInviteResult_invite(ctx context.Context, field graphql.CollectedField, obj *ValidateCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ValidateCleanerInviteResult_invite,
+		func(ctx context.Context) (any, error) {
+			return obj.Invite, nil
+		},
+		nil,
+		ec.marshalOCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ValidateCleanerInviteResult_invite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ValidateCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_CleanerInvite_token(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerInvite_company(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_CleanerInvite_createdBy(ctx, field)
+			case "email":
+				return ec.fieldContext_CleanerInvite_email(ctx, field)
+			case "message":
+				return ec.fieldContext_CleanerInvite_message(ctx, field)
+			case "status":
+				return ec.fieldContext_CleanerInvite_status(ctx, field)
+			case "acceptedBy":
+				return ec.fieldContext_CleanerInvite_acceptedBy(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_CleanerInvite_acceptedAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_CleanerInvite_expiresAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerInvite_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerInvite", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ValidateCleanerInviteResult_company(ctx context.Context, field graphql.CollectedField, obj *ValidateCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ValidateCleanerInviteResult_company,
+		func(ctx context.Context) (any, error) {
+			return obj.Company, nil
+		},
+		nil,
+		ec.marshalOCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ValidateCleanerInviteResult_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ValidateCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ValidateCleanerInviteResult_errorMessage(ctx context.Context, field graphql.CollectedField, obj *ValidateCleanerInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ValidateCleanerInviteResult_errorMessage,
+		func(ctx context.Context) (any, error) {
+			return obj.ErrorMessage, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ValidateCleanerInviteResult_errorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ValidateCleanerInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -26240,6 +27897,47 @@ func (ec *executionContext) unmarshalInputCreateBookingUserInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateCleanerInviteInput(ctx context.Context, obj any) (CreateCleanerInviteInput, error) {
+	var it CreateCleanerInviteInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"email", "message", "expiresInDays"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "message":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Message = data
+		case "expiresInDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresInDays"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpiresInDays = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateCleanerProfileInput(ctx context.Context, obj any) (CreateCleanerProfileInput, error) {
 	var it CreateCleanerProfileInput
 	asMap := map[string]any{}
@@ -27473,6 +29171,55 @@ func (ec *executionContext) unmarshalInputUpdateServiceDefinitionInput(ctx conte
 
 // region    **************************** object.gotpl ****************************
 
+var acceptCleanerInviteResultImplementors = []string{"AcceptCleanerInviteResult"}
+
+func (ec *executionContext) _AcceptCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, obj *AcceptCleanerInviteResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, acceptCleanerInviteResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AcceptCleanerInviteResult")
+		case "success":
+			out.Values[i] = ec._AcceptCleanerInviteResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user":
+			out.Values[i] = ec._AcceptCleanerInviteResult_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "company":
+			out.Values[i] = ec._AcceptCleanerInviteResult_company(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var addressImplementors = []string{"Address"}
 
 func (ec *executionContext) _Address(ctx context.Context, sel ast.SelectionSet, obj *store.Address) graphql.Marshaler {
@@ -28326,6 +30073,220 @@ func (ec *executionContext) _CleanerEarnings(ctx context.Context, sel ast.Select
 	return out
 }
 
+var cleanerInviteImplementors = []string{"CleanerInvite"}
+
+func (ec *executionContext) _CleanerInvite(ctx context.Context, sel ast.SelectionSet, obj *store.CleanerInvite) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cleanerInviteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CleanerInvite")
+		case "id":
+			out.Values[i] = ec._CleanerInvite_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "token":
+			out.Values[i] = ec._CleanerInvite_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "company":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CleanerInvite_company(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CleanerInvite_createdBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "email":
+			out.Values[i] = ec._CleanerInvite_email(ctx, field, obj)
+		case "message":
+			out.Values[i] = ec._CleanerInvite_message(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._CleanerInvite_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "acceptedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CleanerInvite_acceptedBy(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "acceptedAt":
+			out.Values[i] = ec._CleanerInvite_acceptedAt(ctx, field, obj)
+		case "expiresAt":
+			out.Values[i] = ec._CleanerInvite_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._CleanerInvite_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var cleanerInviteResultImplementors = []string{"CleanerInviteResult"}
+
+func (ec *executionContext) _CleanerInviteResult(ctx context.Context, sel ast.SelectionSet, obj *CleanerInviteResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cleanerInviteResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CleanerInviteResult")
+		case "invite":
+			out.Values[i] = ec._CleanerInviteResult_invite(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inviteUrl":
+			out.Values[i] = ec._CleanerInviteResult_inviteUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var cleanerProfileImplementors = []string{"CleanerProfile"}
 
 func (ec *executionContext) _CleanerProfile(ctx context.Context, sel ast.SelectionSet, obj *store.CleanerProfile) graphql.Marshaler {
@@ -28343,10 +30304,41 @@ func (ec *executionContext) _CleanerProfile(ctx context.Context, sel ast.Selecti
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "user":
-			out.Values[i] = ec._CleanerProfile_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CleanerProfile_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "userId":
 			out.Values[i] = ec._CleanerProfile_userId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -29101,6 +31093,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createCleanerInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCleanerInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "acceptCleanerInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acceptCleanerInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "revokeCleanerInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_revokeCleanerInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createCleanerProfile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createCleanerProfile(ctx, field)
@@ -29733,6 +31746,91 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_allBookings(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "validateCleanerInviteToken":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_validateCleanerInviteToken(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "cleanerInvite":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cleanerInvite(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "myCompanyInvites":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myCompanyInvites(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "myCompanyCleaners":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myCompanyCleaners(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -31499,6 +33597,51 @@ func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var validateCleanerInviteResultImplementors = []string{"ValidateCleanerInviteResult"}
+
+func (ec *executionContext) _ValidateCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, obj *ValidateCleanerInviteResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, validateCleanerInviteResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ValidateCleanerInviteResult")
+		case "valid":
+			out.Values[i] = ec._ValidateCleanerInviteResult_valid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "invite":
+			out.Values[i] = ec._ValidateCleanerInviteResult_invite(ctx, field, obj)
+		case "company":
+			out.Values[i] = ec._ValidateCleanerInviteResult_company(ctx, field, obj)
+		case "errorMessage":
+			out.Values[i] = ec._ValidateCleanerInviteResult_errorMessage(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
@@ -31833,6 +33976,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNAcceptCleanerInviteResult2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAcceptCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v AcceptCleanerInviteResult) graphql.Marshaler {
+	return ec._AcceptCleanerInviteResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAcceptCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAcceptCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v *AcceptCleanerInviteResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AcceptCleanerInviteResult(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNAddCleanerResponseInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAddCleanerResponseInput(ctx context.Context, v any) (AddCleanerResponseInput, error) {
 	res, err := ec.unmarshalInputAddCleanerResponseInput(ctx, v)
@@ -32291,6 +34448,95 @@ func (ec *executionContext) marshalNCleanerEarnings2ᚖcleanbuddyᚑapiᚋsysᚋ
 		return graphql.Null
 	}
 	return ec._CleanerEarnings(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCleanerInvite2cleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite(ctx context.Context, sel ast.SelectionSet, v store.CleanerInvite) graphql.Marshaler {
+	return ec._CleanerInvite(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCleanerInvite2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInviteᚄ(ctx context.Context, sel ast.SelectionSet, v []*store.CleanerInvite) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite(ctx context.Context, sel ast.SelectionSet, v *store.CleanerInvite) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CleanerInvite(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCleanerInviteResult2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v CleanerInviteResult) graphql.Marshaler {
+	return ec._CleanerInviteResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v *CleanerInviteResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CleanerInviteResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCleanerInviteStatus2cleanbuddyᚑapiᚋresᚋstoreᚐCleanerInviteStatus(ctx context.Context, v any) (store.CleanerInviteStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := store.CleanerInviteStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCleanerInviteStatus2cleanbuddyᚑapiᚋresᚋstoreᚐCleanerInviteStatus(ctx context.Context, sel ast.SelectionSet, v store.CleanerInviteStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNCleanerProfile2cleanbuddyᚑapiᚋresᚋstoreᚐCleanerProfile(ctx context.Context, sel ast.SelectionSet, v store.CleanerProfile) graphql.Marshaler {
@@ -33606,6 +35852,20 @@ func (ec *executionContext) marshalNUserRole2cleanbuddyᚑapiᚋresᚋstoreᚐUs
 	return res
 }
 
+func (ec *executionContext) marshalNValidateCleanerInviteResult2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐValidateCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v ValidateCleanerInviteResult) graphql.Marshaler {
+	return ec._ValidateCleanerInviteResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNValidateCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐValidateCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v *ValidateCleanerInviteResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ValidateCleanerInviteResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNVoid2cleanbuddyᚑapiᚋsysᚋgraphqlᚋscalarᚐVoid(ctx context.Context, v any) (scalar.Void, error) {
 	res, err := scalar.UnmarshalVoid(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -34043,6 +36303,13 @@ func (ec *executionContext) marshalOCancellationReason2ᚖcleanbuddyᚑapiᚋres
 	return res
 }
 
+func (ec *executionContext) marshalOCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite(ctx context.Context, sel ast.SelectionSet, v *store.CleanerInvite) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CleanerInvite(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOCleanerProfile2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerProfile(ctx context.Context, sel ast.SelectionSet, v *store.CleanerProfile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -34112,6 +36379,14 @@ func (ec *executionContext) unmarshalOCreateBookingUserInput2ᚖcleanbuddyᚑapi
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputCreateBookingUserInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCreateCleanerInviteInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateCleanerInviteInput(ctx context.Context, v any) (*CreateCleanerInviteInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCreateCleanerInviteInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

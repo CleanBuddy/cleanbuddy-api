@@ -23,6 +23,15 @@ func (r *Resolver) CleanerProfile() gen.CleanerProfileResolver {
 	return &cleanerProfileResolver{r}
 }
 
+func (cpr *cleanerProfileResolver) User(ctx context.Context, profile *store.CleanerProfile) (*store.User, error) {
+	user, err := cpr.Store.Users().Get(ctx, profile.UserID)
+	if err != nil {
+		cpr.Logger.Printf("Error retrieving user for cleaner profile: %s", err)
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+}
+
 func (cpr *cleanerProfileResolver) ServiceAreas(ctx context.Context, profile *store.CleanerProfile) ([]*store.ServiceArea, error) {
 	areas, err := cpr.Store.ServiceAreas().GetByCleanerProfile(ctx, profile.ID)
 	if err != nil {
@@ -265,10 +274,19 @@ func (mr *mutationResolver) CreateCleanerProfile(ctx context.Context, input gen.
 		IsVerified: false,
 	}
 
-	// Link cleaner to their company (created during application approval)
-	company, err := mr.Store.Companies().GetByAdminUserID(ctx, currentUser.ID)
-	if err == nil && company != nil {
-		profile.CompanyID = &company.ID
+	// Check if user was invited to a company
+	var inviteToDelete *store.CleanerInvite
+	invite, err := mr.Store.CleanerInvites().GetByAcceptedUserID(ctx, currentUser.ID)
+	if err == nil && invite != nil {
+		// User was invited - link to that company
+		profile.CompanyID = &invite.CompanyID
+		inviteToDelete = invite
+	} else {
+		// Original logic: Link cleaner to their company (created during application approval)
+		company, err := mr.Store.Companies().GetByAdminUserID(ctx, currentUser.ID)
+		if err == nil && company != nil {
+			profile.CompanyID = &company.ID
+		}
 	}
 
 	if input.Bio != nil {
@@ -304,6 +322,14 @@ func (mr *mutationResolver) CreateCleanerProfile(ctx context.Context, input gen.
 		if err := mr.Store.ServiceAreas().Create(ctx, area); err != nil {
 			mr.Logger.Printf("Error creating service area: %s", err)
 			// Continue creating other areas
+		}
+	}
+
+	// Delete the invite after profile is successfully created
+	if inviteToDelete != nil {
+		if err := mr.Store.CleanerInvites().Delete(ctx, inviteToDelete.ID); err != nil {
+			mr.Logger.Printf("Error deleting accepted invite: %s", err)
+			// Don't fail the profile creation if invite deletion fails
 		}
 	}
 

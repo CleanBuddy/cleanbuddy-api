@@ -7,7 +7,7 @@ enum CleanerTier {
 
 type CleanerProfile {
     id: ID!
-    user: User!
+    user: User! @goField(forceResolver: true)
     userId: ID!
     company: Company @goField(forceResolver: true)
     companyId: ID

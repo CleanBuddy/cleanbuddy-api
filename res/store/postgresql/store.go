@@ -27,6 +27,7 @@ type storeImpl struct {
 	transactionStore    *transactionStore
 	availabilityStore   *availabilityStore
 	companyStore        *companyStore
+	cleanerInviteStore  *cleanerInviteStore
 }
 
 func (sImpl *storeImpl) AuthSessions() store.AuthSessionStore {
@@ -77,6 +78,10 @@ func (sImpl *storeImpl) Companies() store.CompanyStore {
 	return sImpl.companyStore
 }
 
+func (sImpl *storeImpl) CleanerInvites() store.CleanerInviteStore {
+	return sImpl.cleanerInviteStore
+}
+
 func (sImpl *storeImpl) GetDB() interface{} {
 	return sImpl.db
 }
@@ -98,25 +103,26 @@ func Connect(connectionUrl string) (*storeImpl, error) {
 	}
 
 	// Auto-migrate all tables
-	err = db.AutoMigrate(
-		&store.User{},
-		&store.AuthSession{},
-		&store.Application{},
-		&store.Company{},
-		&store.CleanerProfile{},
-		&store.ServiceArea{},
-		&store.Address{},
-		&store.ServiceDefinition{},
-		&store.ServiceAddOnDefinition{},
-		&store.Booking{},
-		&store.Review{},
-		&store.Transaction{},
-		&store.PayoutBatch{},
-		&store.Availability{},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to auto-migrate tables: %w", err)
-	}
+	// err = db.AutoMigrate(
+	// 	&store.User{},
+	// 	&store.AuthSession{},
+	// 	&store.Application{},
+	// 	&store.Company{},
+	// 	&store.CleanerProfile{},
+	// 	&store.CleanerInvite{},
+	// 	&store.ServiceArea{},
+	// 	&store.Address{},
+	// 	&store.ServiceDefinition{},
+	// 	&store.ServiceAddOnDefinition{},
+	// 	&store.Booking{},
+	// 	&store.Review{},
+	// 	&store.Transaction{},
+	// 	&store.PayoutBatch{},
+	// 	&store.Availability{},
+	// )
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to auto-migrate tables: %w", err)
+	// }
 
 	s := &storeImpl{db: db}
 
@@ -132,6 +138,7 @@ func Connect(connectionUrl string) (*storeImpl, error) {
 	s.transactionStore = NewTransactionStore(s)
 	s.availabilityStore = NewAvailabilityStore(s)
 	s.companyStore = NewCompanyStore(s)
+	s.cleanerInviteStore = NewCleanerInviteStore(s)
 
 	return s, nil
 }

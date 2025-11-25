@@ -18,6 +18,7 @@ type Store interface {
 	Transactions() TransactionStore
 	Availability() AvailabilityStore
 	Companies() CompanyStore
+	CleanerInvites() CleanerInviteStore
 
 	// Database access for advanced operations
 	GetDB() interface{} // Returns the underlying database connection

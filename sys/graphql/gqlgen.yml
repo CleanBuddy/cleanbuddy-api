@@ -99,3 +99,9 @@ models:
     model: cleanbuddy-api/res/store.Company
   CompanyType:
     model: cleanbuddy-api/res/store.CompanyType
+
+  # Cleaner Invite
+  CleanerInvite:
+    model: cleanbuddy-api/res/store.CleanerInvite
+  CleanerInviteStatus:
+    model: cleanbuddy-api/res/store.CleanerInviteStatus
