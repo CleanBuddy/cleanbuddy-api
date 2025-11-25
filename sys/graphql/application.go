@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"cleanbuddy-api/res/storage"
 	"cleanbuddy-api/res/store"
 	"cleanbuddy-api/sys/graphql/gen"
 	"cleanbuddy-api/sys/http/middleware"
@@ -107,6 +108,31 @@ func (qr *queryResolver) PendingApplications(ctx context.Context) ([]*store.Appl
 	return applications, nil
 }
 
+func (qr *queryResolver) GenerateDocumentSignedURL(ctx context.Context, documentURL string) (string, error) {
+	currentUser := middleware.GetCurrentUser(ctx)
+	if currentUser == nil {
+		return "", errors.New("access forbidden, authorization required")
+	}
+
+	// Only global admins can generate signed URLs for documents
+	if !currentUser.IsGlobalAdmin() {
+		return "", errors.New("access forbidden, global admin access required")
+	}
+
+	if qr.StorageService == nil {
+		return "", errors.New("storage service not available")
+	}
+
+	// Generate signed URL valid for 24 hours
+	signedURL, err := qr.StorageService.GenerateSignedURL(ctx, documentURL, 24*60*60*1000000000) // 24 hours in nanoseconds
+	if err != nil {
+		qr.Logger.Printf("Error generating signed URL: %s", err)
+		return "", errors.New("failed to generate signed URL")
+	}
+
+	return signedURL, nil
+}
+
 // MUTATION RESOLVERS
 
 func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.SubmitApplicationInput) (*store.Application, error) {
@@ -165,14 +191,88 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		}
 	}
 
-	// Map documents if provided
+	// Handle document uploads if provided
 	if input.Documents != nil {
-		application.Documents = &store.ApplicationDocuments{
-			IdentityDocumentUrl:     input.Documents.IdentityDocumentURL,
-			BusinessRegistrationUrl: input.Documents.BusinessRegistrationURL,
-			InsuranceCertificateUrl: input.Documents.InsuranceCertificateURL,
-			AdditionalDocuments:     input.Documents.AdditionalDocuments,
+		if mr.StorageService == nil {
+			return nil, errors.New("storage service not available")
 		}
+
+		docs := &store.ApplicationDocuments{}
+
+		// Upload identity document (required)
+		path := storage.BuildApplicationDocumentPath(application.ID, "identity-document", input.Documents.IdentityDocument.Filename)
+		url, err := mr.StorageService.UploadFromReader(
+			ctx,
+			input.Documents.IdentityDocument.File,
+			input.Documents.IdentityDocument.Filename,
+			input.Documents.IdentityDocument.Size,
+			input.Documents.IdentityDocument.ContentType,
+			path,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload identity document: %w", err)
+		}
+		docs.IdentityDocumentUrl = url
+
+		// Upload business registration (optional)
+		if input.Documents.BusinessRegistration != nil {
+			path := storage.BuildApplicationDocumentPath(application.ID, "business-registration", input.Documents.BusinessRegistration.Filename)
+			url, err := mr.StorageService.UploadFromReader(
+				ctx,
+				input.Documents.BusinessRegistration.File,
+				input.Documents.BusinessRegistration.Filename,
+				input.Documents.BusinessRegistration.Size,
+				input.Documents.BusinessRegistration.ContentType,
+				path,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to upload business registration: %w", err)
+			}
+			docs.BusinessRegistrationUrl = &url
+		}
+
+		// Upload insurance certificate (optional)
+		if input.Documents.InsuranceCertificate != nil {
+			path := storage.BuildApplicationDocumentPath(application.ID, "insurance-certificate", input.Documents.InsuranceCertificate.Filename)
+			url, err := mr.StorageService.UploadFromReader(
+				ctx,
+				input.Documents.InsuranceCertificate.File,
+				input.Documents.InsuranceCertificate.Filename,
+				input.Documents.InsuranceCertificate.Size,
+				input.Documents.InsuranceCertificate.ContentType,
+				path,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to upload insurance certificate: %w", err)
+			}
+			docs.InsuranceCertificateUrl = &url
+		}
+
+		// Upload additional documents (optional)
+		if len(input.Documents.AdditionalDocuments) > 0 {
+			additionalUrls := make([]string, 0, len(input.Documents.AdditionalDocuments))
+			for i, upload := range input.Documents.AdditionalDocuments {
+				if upload == nil {
+					continue
+				}
+				path := storage.BuildApplicationDocumentPath(application.ID, fmt.Sprintf("additional-%d", i+1), upload.Filename)
+				url, err := mr.StorageService.UploadFromReader(
+					ctx,
+					upload.File,
+					upload.Filename,
+					upload.Size,
+					upload.ContentType,
+					path,
+				)
+				if err != nil {
+					return nil, fmt.Errorf("failed to upload additional document %d: %w", i+1, err)
+				}
+				additionalUrls = append(additionalUrls, url)
+			}
+			docs.AdditionalDocuments = additionalUrls
+		}
+
+		application.Documents = docs
 	}
 
 	if err := mr.Store.Applications().Create(ctx, application); err != nil {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"cleanbuddy-api/res/mail/sidemail"
 	"cleanbuddy-api/res/notification"
 	"cleanbuddy-api/res/notification/slack"
+	"cleanbuddy-api/res/storage"
 	"cleanbuddy-api/res/store"
 	"cleanbuddy-api/res/store/postgresql"
 	"cleanbuddy-api/sys/graphql"
@@ -38,6 +40,9 @@ var logger = log.New(os.Stdout, "", log.LstdFlags|log.LUTC|log.Llongfile)
 // - SIDEMAIL_SIGNUPS_GROUP_ID: Sidemail group ID for user signups (optional)
 // - SLACK_WEBHOOK_URL: Slack webhook URL for notifications (optional)
 // - SLACK_TIMEOUT_SECONDS: Timeout for notification API requests in seconds (default: 5)
+// - GCS_BUCKET_NAME: Google Cloud Storage bucket name for document uploads (optional)
+// - GCS_PROJECT_ID: Google Cloud project ID (optional)
+// - GOOGLE_APPLICATION_CREDENTIALS: Path to GCS service account credentials file (optional)
 
 // Global service instances initialized once
 var (
@@ -45,6 +50,7 @@ var (
 	authInstance                auth.Auth
 	mailServiceInstance         mail.MailService
 	notificationServiceInstance notification.NotificationService
+	storageServiceInstance      *storage.GCSService
 	initOnce                    sync.Once
 	initError                   error
 )
@@ -60,6 +66,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		authInstance = configAuth()
 		mailServiceInstance = configMail()
 		notificationServiceInstance = configNotification()
+		storageServiceInstance = configStorage()
 	})
 
 	if initError != nil {
@@ -72,6 +79,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Auth:                authInstance,
 		MailService:         mailServiceInstance,
 		NotificationService: notificationServiceInstance,
+		StorageService:      storageServiceInstance,
 	})
 
 	// GraphQL endpoint with middleware stack
@@ -140,4 +148,30 @@ func configNotification() notification.NotificationService {
 	timeout, _ := time.ParseDuration(timeoutSeconds + "s")
 
 	return slack.New(webhookURL, timeout, logger)
+}
+
+func configStorage() *storage.GCSService {
+	bucketName := readOptionalEnvVar("GCS_BUCKET_NAME", "")
+	if bucketName == "" {
+		logger.Printf("GCS_BUCKET_NAME not set, storage service disabled")
+		return nil
+	}
+
+	projectID := readOptionalEnvVar("GCS_PROJECT_ID", "")
+	if projectID == "" {
+		logger.Printf("GCS_PROJECT_ID not set, storage service disabled")
+		return nil
+	}
+
+	credentialsPath := readOptionalEnvVar("GOOGLE_APPLICATION_CREDENTIALS", "")
+
+	ctx := context.Background()
+	gcsService, err := storage.NewGCSService(ctx, bucketName, projectID, credentialsPath)
+	if err != nil {
+		logger.Printf("Failed to initialize GCS storage service: %v. Storage service disabled.", err)
+		return nil
+	}
+
+	logger.Printf("GCS storage service initialized successfully (bucket: %s)", bucketName)
+	return gcsService
 }

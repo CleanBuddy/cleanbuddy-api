@@ -22,10 +22,10 @@ input CompanyInfoInput {
 }
 
 input ApplicationDocumentsInput {
-    identityDocumentUrl: String!
-    businessRegistrationUrl: String
-    insuranceCertificateUrl: String
-    additionalDocuments: [String!]
+    identityDocument: Upload!
+    businessRegistration: Upload
+    insuranceCertificate: Upload
+    additionalDocuments: [Upload!]
 }
 
 input SubmitApplicationInput {
@@ -75,6 +75,7 @@ extend type Query {
     application(id: ID!): Application @authRequired
     myApplications: [Application!]! @authRequired
     pendingApplications: [Application!]! @authRequired
+    generateDocumentSignedUrl(documentUrl: String!): String! @authRequired
 }
 
 ## MUTATIONS

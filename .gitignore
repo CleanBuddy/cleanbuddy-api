@@ -17,3 +17,6 @@ bin/
 
 # OS generated files
 .DS_Store
+
+gcs-credentials.json
+*.json

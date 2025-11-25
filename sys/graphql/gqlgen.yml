@@ -13,6 +13,8 @@ autobind:
   - cleanbuddy-api/res/store
 
 models:
+  Upload:
+    model: github.com/99designs/gqlgen/graphql.Upload
   Void:
     model: cleanbuddy-api/sys/graphql/scalar.Void
   TimeInterval:

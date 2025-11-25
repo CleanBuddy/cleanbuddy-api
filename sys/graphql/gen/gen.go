@@ -308,6 +308,7 @@ type ComplexityRoot struct {
 		CleanersByPostalCode         func(childComplexity int, postalCode string) int
 		CleanersInArea               func(childComplexity int, city string, neighborhood string) int
 		CurrentUser                  func(childComplexity int) int
+		GenerateDocumentSignedURL    func(childComplexity int, documentURL string) int
 		IsCleanerAvailable           func(childComplexity int, input CheckAvailabilityInput) int
 		MyAddresses                  func(childComplexity int) int
 		MyApplications               func(childComplexity int) int
@@ -562,6 +563,7 @@ type QueryResolver interface {
 	Application(ctx context.Context, id string) (*store.Application, error)
 	MyApplications(ctx context.Context) ([]*store.Application, error)
 	PendingApplications(ctx context.Context) ([]*store.Application, error)
+	GenerateDocumentSignedURL(ctx context.Context, documentURL string) (string, error)
 	Availability(ctx context.Context, id string) (*store.Availability, error)
 	AvailabilityForCleaner(ctx context.Context, cleanerProfileID string, filters *AvailabilityFiltersInput, limit *int, offset *int) ([]*store.Availability, error)
 	MyAvailability(ctx context.Context, filters *AvailabilityFiltersInput, limit *int, offset *int) ([]*store.Availability, error)
@@ -2170,6 +2172,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.CurrentUser(childComplexity), true
+	case "Query.generateDocumentSignedUrl":
+		if e.complexity.Query.GenerateDocumentSignedURL == nil {
+			break
+		}
+
+		args, err := ec.field_Query_generateDocumentSignedUrl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GenerateDocumentSignedURL(childComplexity, args["documentUrl"].(string)), true
 	case "Query.isCleanerAvailable":
 		if e.complexity.Query.IsCleanerAvailable == nil {
 			break
@@ -3389,14 +3402,14 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../application.graphql", Input: `enum ApplicationType {
-    CLEANER
-    COMPANY_ADMIN
+    cleaner
+    company_admin
 }
 
 enum ApplicationStatus {
-    PENDING
-    APPROVED
-    REJECTED
+    pending
+    approved
+    rejected
 }
 
 input CompanyInfoInput {
@@ -3412,10 +3425,10 @@ input CompanyInfoInput {
 }
 
 input ApplicationDocumentsInput {
-    identityDocumentUrl: String!
-    businessRegistrationUrl: String
-    insuranceCertificateUrl: String
-    additionalDocuments: [String!]
+    identityDocument: Upload!
+    businessRegistration: Upload
+    insuranceCertificate: Upload
+    additionalDocuments: [Upload!]
 }
 
 input SubmitApplicationInput {
@@ -3465,6 +3478,7 @@ extend type Query {
     application(id: ID!): Application @authRequired
     myApplications: [Application!]! @authRequired
     pendingApplications: [Application!]! @authRequired
+    generateDocumentSignedUrl(documentUrl: String!): String! @authRequired
 }
 
 ## MUTATIONS
@@ -5288,6 +5302,17 @@ func (ec *executionContext) field_Query_cleanersInArea_args(ctx context.Context,
 		return nil, err
 	}
 	args["neighborhood"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_generateDocumentSignedUrl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "documentUrl", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["documentUrl"] = arg0
 	return args, nil
 }
 
@@ -14984,6 +15009,60 @@ func (ec *executionContext) fieldContext_Query_pendingApplications(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_generateDocumentSignedUrl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_generateDocumentSignedUrl,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().GenerateDocumentSignedURL(ctx, fc.Args["documentUrl"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal string
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_generateDocumentSignedUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_generateDocumentSignedUrl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_availability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -23581,37 +23660,37 @@ func (ec *executionContext) unmarshalInputApplicationDocumentsInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"identityDocumentUrl", "businessRegistrationUrl", "insuranceCertificateUrl", "additionalDocuments"}
+	fieldsInOrder := [...]string{"identityDocument", "businessRegistration", "insuranceCertificate", "additionalDocuments"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "identityDocumentUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("identityDocumentUrl"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+		case "identityDocument":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("identityDocument"))
+			data, err := ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.IdentityDocumentURL = data
-		case "businessRegistrationUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessRegistrationUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			it.IdentityDocument = data
+		case "businessRegistration":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessRegistration"))
+			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.BusinessRegistrationURL = data
-		case "insuranceCertificateUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("insuranceCertificateUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			it.BusinessRegistration = data
+		case "insuranceCertificate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("insuranceCertificate"))
+			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.InsuranceCertificateURL = data
+			it.InsuranceCertificate = data
 		case "additionalDocuments":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("additionalDocuments"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -27510,6 +27589,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "generateDocumentSignedUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_generateDocumentSignedUrl(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "availability":
 			field := field
 
@@ -29754,7 +29855,7 @@ func (ec *executionContext) marshalNAddress2ᚕᚖcleanbuddyᚑapiᚋresᚋstore
 func (ec *executionContext) marshalNAddress2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐAddress(ctx context.Context, sel ast.SelectionSet, v *store.Address) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -29812,7 +29913,7 @@ func (ec *executionContext) marshalNApplication2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication(ctx context.Context, sel ast.SelectionSet, v *store.Application) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -29830,7 +29931,7 @@ func (ec *executionContext) marshalNApplicationStatus2cleanbuddyᚑapiᚋresᚋs
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -29847,7 +29948,7 @@ func (ec *executionContext) marshalNApplicationType2cleanbuddyᚑapiᚋresᚋsto
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -29870,7 +29971,7 @@ func (ec *executionContext) marshalNAuthResult2cleanbuddyᚑapiᚋsysᚋgraphql�
 func (ec *executionContext) marshalNAuthResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAuthResult(ctx context.Context, sel ast.SelectionSet, v *AuthResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -29928,7 +30029,7 @@ func (ec *executionContext) marshalNAvailability2ᚕᚖcleanbuddyᚑapiᚋresᚋ
 func (ec *executionContext) marshalNAvailability2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐAvailability(ctx context.Context, sel ast.SelectionSet, v *store.Availability) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -29946,7 +30047,7 @@ func (ec *executionContext) marshalNAvailabilityType2cleanbuddyᚑapiᚋresᚋst
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30003,7 +30104,7 @@ func (ec *executionContext) marshalNBooking2ᚕᚖcleanbuddyᚑapiᚋresᚋstore
 func (ec *executionContext) marshalNBooking2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐBooking(ctx context.Context, sel ast.SelectionSet, v *store.Booking) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30017,7 +30118,7 @@ func (ec *executionContext) marshalNBookingConnection2cleanbuddyᚑapiᚋsysᚋg
 func (ec *executionContext) marshalNBookingConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐBookingConnection(ctx context.Context, sel ast.SelectionSet, v *BookingConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30071,7 +30172,7 @@ func (ec *executionContext) marshalNBookingEdge2ᚕᚖcleanbuddyᚑapiᚋsysᚋg
 func (ec *executionContext) marshalNBookingEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐBookingEdge(ctx context.Context, sel ast.SelectionSet, v *BookingEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30089,7 +30190,7 @@ func (ec *executionContext) marshalNBookingStatus2cleanbuddyᚑapiᚋresᚋstore
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30105,7 +30206,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30132,7 +30233,7 @@ func (ec *executionContext) marshalNCancellationReason2cleanbuddyᚑapiᚋresᚋ
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30150,7 +30251,7 @@ func (ec *executionContext) marshalNCleanerEarnings2cleanbuddyᚑapiᚋsysᚋgra
 func (ec *executionContext) marshalNCleanerEarnings2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerEarnings(ctx context.Context, sel ast.SelectionSet, v *CleanerEarnings) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30208,7 +30309,7 @@ func (ec *executionContext) marshalNCleanerProfile2ᚕᚖcleanbuddyᚑapiᚋres�
 func (ec *executionContext) marshalNCleanerProfile2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerProfile(ctx context.Context, sel ast.SelectionSet, v *store.CleanerProfile) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30222,7 +30323,7 @@ func (ec *executionContext) marshalNCleanerProfileConnection2cleanbuddyᚑapiᚋ
 func (ec *executionContext) marshalNCleanerProfileConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerProfileConnection(ctx context.Context, sel ast.SelectionSet, v *CleanerProfileConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30276,7 +30377,7 @@ func (ec *executionContext) marshalNCleanerProfileEdge2ᚕᚖcleanbuddyᚑapiᚋ
 func (ec *executionContext) marshalNCleanerProfileEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerProfileEdge(ctx context.Context, sel ast.SelectionSet, v *CleanerProfileEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30294,7 +30395,7 @@ func (ec *executionContext) marshalNCleanerTier2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30400,7 +30501,7 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	res := graphql.MarshalFloatContext(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
@@ -30416,7 +30517,7 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30432,7 +30533,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30448,7 +30549,7 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30470,7 +30571,7 @@ func (ec *executionContext) marshalNPaymentMethod2cleanbuddyᚑapiᚋresᚋstore
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30527,7 +30628,7 @@ func (ec *executionContext) marshalNPayoutBatch2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNPayoutBatch2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐPayoutBatch(ctx context.Context, sel ast.SelectionSet, v *store.PayoutBatch) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30585,7 +30686,7 @@ func (ec *executionContext) marshalNReview2ᚕᚖcleanbuddyᚑapiᚋresᚋstore�
 func (ec *executionContext) marshalNReview2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐReview(ctx context.Context, sel ast.SelectionSet, v *store.Review) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30599,7 +30700,7 @@ func (ec *executionContext) marshalNReviewConnection2cleanbuddyᚑapiᚋsysᚋgr
 func (ec *executionContext) marshalNReviewConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐReviewConnection(ctx context.Context, sel ast.SelectionSet, v *ReviewConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30653,7 +30754,7 @@ func (ec *executionContext) marshalNReviewEdge2ᚕᚖcleanbuddyᚑapiᚋsysᚋgr
 func (ec *executionContext) marshalNReviewEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐReviewEdge(ctx context.Context, sel ast.SelectionSet, v *ReviewEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30671,7 +30772,7 @@ func (ec *executionContext) marshalNReviewStatus2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30688,7 +30789,7 @@ func (ec *executionContext) marshalNServiceAddOn2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30804,7 +30905,7 @@ func (ec *executionContext) marshalNServiceAddOnDefinition2ᚕᚖcleanbuddyᚑap
 func (ec *executionContext) marshalNServiceAddOnDefinition2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐServiceAddOnDefinition(ctx context.Context, sel ast.SelectionSet, v *store.ServiceAddOnDefinition) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30862,7 +30963,7 @@ func (ec *executionContext) marshalNServiceArea2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNServiceArea2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐServiceArea(ctx context.Context, sel ast.SelectionSet, v *store.ServiceArea) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30920,7 +31021,7 @@ func (ec *executionContext) marshalNServiceDefinition2ᚕᚖcleanbuddyᚑapiᚋr
 func (ec *executionContext) marshalNServiceDefinition2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐServiceDefinition(ctx context.Context, sel ast.SelectionSet, v *store.ServiceDefinition) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30938,7 +31039,7 @@ func (ec *executionContext) marshalNServiceFrequency2cleanbuddyᚑapiᚋresᚋst
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30951,7 +31052,7 @@ func (ec *executionContext) marshalNServicePriceCalculation2cleanbuddyᚑapiᚋs
 func (ec *executionContext) marshalNServicePriceCalculation2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐServicePriceCalculation(ctx context.Context, sel ast.SelectionSet, v *ServicePriceCalculation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -30969,7 +31070,7 @@ func (ec *executionContext) marshalNServiceType2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -30985,7 +31086,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31043,7 +31144,7 @@ func (ec *executionContext) marshalNTierRateRange2ᚕᚖcleanbuddyᚑapiᚋsys�
 func (ec *executionContext) marshalNTierRateRange2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTierRateRange(ctx context.Context, sel ast.SelectionSet, v *TierRateRange) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31060,7 +31161,7 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31113,7 +31214,7 @@ func (ec *executionContext) marshalNTransaction2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNTransaction2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *store.Transaction) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31127,7 +31228,7 @@ func (ec *executionContext) marshalNTransactionConnection2cleanbuddyᚑapiᚋsys
 func (ec *executionContext) marshalNTransactionConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTransactionConnection(ctx context.Context, sel ast.SelectionSet, v *TransactionConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31181,7 +31282,7 @@ func (ec *executionContext) marshalNTransactionEdge2ᚕᚖcleanbuddyᚑapiᚋsys
 func (ec *executionContext) marshalNTransactionEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTransactionEdge(ctx context.Context, sel ast.SelectionSet, v *TransactionEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31199,7 +31300,7 @@ func (ec *executionContext) marshalNTransactionStatus2cleanbuddyᚑapiᚋresᚋs
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31216,7 +31317,7 @@ func (ec *executionContext) marshalNTransactionType2cleanbuddyᚑapiᚋresᚋsto
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31267,6 +31368,44 @@ func (ec *executionContext) unmarshalNUpdateServiceDefinitionInput2cleanbuddyᚑ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalUpload(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	_ = sel
+	res := graphql.MarshalUpload(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNUser2cleanbuddyᚑapiᚋresᚋstoreᚐUser(ctx context.Context, sel ast.SelectionSet, v store.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -31274,7 +31413,7 @@ func (ec *executionContext) marshalNUser2cleanbuddyᚑapiᚋresᚋstoreᚐUser(c
 func (ec *executionContext) marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser(ctx context.Context, sel ast.SelectionSet, v *store.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31328,7 +31467,7 @@ func (ec *executionContext) marshalNUserEdge2ᚕᚖcleanbuddyᚑapiᚋsysᚋgrap
 func (ec *executionContext) marshalNUserEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *UserEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31346,7 +31485,7 @@ func (ec *executionContext) marshalNUserRole2cleanbuddyᚑapiᚋresᚋstoreᚐUs
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31362,7 +31501,7 @@ func (ec *executionContext) marshalNVoid2cleanbuddyᚑapiᚋsysᚋgraphqlᚋscal
 	res := scalar.MarshalVoid(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31376,7 +31515,7 @@ func (ec *executionContext) unmarshalNVoid2ᚖcleanbuddyᚑapiᚋsysᚋgraphql�
 func (ec *executionContext) marshalNVoid2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋscalarᚐVoid(ctx context.Context, sel ast.SelectionSet, v *scalar.Void) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31384,7 +31523,7 @@ func (ec *executionContext) marshalNVoid2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋs
 	res := scalar.MarshalVoid(*v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31448,7 +31587,7 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -31620,7 +31759,7 @@ func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, sel ast.SelectionSet, v *introspection.Type) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -31637,7 +31776,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -32286,6 +32425,60 @@ func (ec *executionContext) marshalOTransactionType2ᚖcleanbuddyᚑapiᚋresᚋ
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx context.Context, v any) ([]*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*graphql.Upload, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx context.Context, sel ast.SelectionSet, v []*graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalUpload(*v)
 	return res
 }
 

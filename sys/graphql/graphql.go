@@ -11,6 +11,7 @@ import (
 	"cleanbuddy-api/res/auth"
 	"cleanbuddy-api/res/mail"
 	"cleanbuddy-api/res/notification"
+	"cleanbuddy-api/res/storage"
 	"cleanbuddy-api/res/store"
 	"cleanbuddy-api/sys/graphql/directive"
 	"cleanbuddy-api/sys/graphql/gen"
@@ -30,6 +31,7 @@ type Config struct {
 	Store               store.Store
 	MailService         mail.MailService
 	NotificationService notification.NotificationService
+	StorageService      *storage.GCSService
 	Auth                auth.Auth
 }
 

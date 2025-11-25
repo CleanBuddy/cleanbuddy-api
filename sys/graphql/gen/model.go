@@ -9,6 +9,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type AddCleanerResponseInput struct {
@@ -17,10 +19,10 @@ type AddCleanerResponseInput struct {
 }
 
 type ApplicationDocumentsInput struct {
-	IdentityDocumentURL     string   `json:"identityDocumentUrl"`
-	BusinessRegistrationURL *string  `json:"businessRegistrationUrl,omitempty"`
-	InsuranceCertificateURL *string  `json:"insuranceCertificateUrl,omitempty"`
-	AdditionalDocuments     []string `json:"additionalDocuments,omitempty"`
+	IdentityDocument     graphql.Upload    `json:"identityDocument"`
+	BusinessRegistration *graphql.Upload   `json:"businessRegistration,omitempty"`
+	InsuranceCertificate *graphql.Upload   `json:"insuranceCertificate,omitempty"`
+	AdditionalDocuments  []*graphql.Upload `json:"additionalDocuments,omitempty"`
 }
 
 type AuthResult struct {
