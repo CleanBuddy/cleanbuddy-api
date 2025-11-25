@@ -477,11 +477,12 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Applications func(childComplexity int) int
-		DisplayName  func(childComplexity int) int
-		Email        func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Role         func(childComplexity int) int
+		Applications              func(childComplexity int) int
+		DisplayName               func(childComplexity int) int
+		Email                     func(childComplexity int) int
+		ID                        func(childComplexity int) int
+		PendingCleanerApplication func(childComplexity int) int
+		Role                      func(childComplexity int) int
 	}
 
 	UserConnection struct {
@@ -607,6 +608,7 @@ type QueryResolver interface {
 }
 type UserResolver interface {
 	Applications(ctx context.Context, obj *store.User) ([]*store.Application, error)
+	PendingCleanerApplication(ctx context.Context, obj *store.User) (*store.Application, error)
 }
 
 type executableSchema struct {
@@ -3126,6 +3128,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+	case "User.pendingCleanerApplication":
+		if e.complexity.User.PendingCleanerApplication == nil {
+			break
+		}
+
+		return e.complexity.User.PendingCleanerApplication(childComplexity), true
 	case "User.role":
 		if e.complexity.User.Role == nil {
 			break
@@ -4551,6 +4559,7 @@ type User {
     email: String!
 
     applications: [Application!]! @authRequired @goField(forceResolver: true)
+    pendingCleanerApplication: Application @authRequired @goField(forceResolver: true)
 }
 
 type UserEdge {
@@ -5799,6 +5808,8 @@ func (ec *executionContext) fieldContext_Address_user(_ context.Context, field g
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -6391,6 +6402,8 @@ func (ec *executionContext) fieldContext_Application_user(_ context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -6636,6 +6649,8 @@ func (ec *executionContext) fieldContext_Application_reviewedBy(_ context.Contex
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7394,6 +7409,8 @@ func (ec *executionContext) fieldContext_Booking_customer(_ context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7464,6 +7481,8 @@ func (ec *executionContext) fieldContext_Booking_cleaner(_ context.Context, fiel
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -8206,6 +8225,8 @@ func (ec *executionContext) fieldContext_Booking_cancelledBy(_ context.Context, 
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -9143,6 +9164,8 @@ func (ec *executionContext) fieldContext_CleanerProfile_user(_ context.Context, 
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -14122,6 +14145,8 @@ func (ec *executionContext) fieldContext_Mutation_updateCurrentUser(ctx context.
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -14348,6 +14373,8 @@ func (ec *executionContext) fieldContext_PayoutBatch_initiatedBy(_ context.Conte
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -18334,6 +18361,8 @@ func (ec *executionContext) fieldContext_Query_currentUser(_ context.Context, fi
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -18652,6 +18681,8 @@ func (ec *executionContext) fieldContext_Review_customer(_ context.Context, fiel
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -18722,6 +18753,8 @@ func (ec *executionContext) fieldContext_Review_cleaner(_ context.Context, field
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19190,6 +19223,8 @@ func (ec *executionContext) fieldContext_Review_moderatedBy(_ context.Context, f
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -21051,6 +21086,8 @@ func (ec *executionContext) fieldContext_Transaction_payer(_ context.Context, fi
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -21121,6 +21158,8 @@ func (ec *executionContext) fieldContext_Transaction_payee(_ context.Context, fi
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -22039,6 +22078,74 @@ func (ec *executionContext) fieldContext_User_applications(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _User_pendingCleanerApplication(ctx context.Context, field graphql.CollectedField, obj *store.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_pendingCleanerApplication,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.User().PendingCleanerApplication(ctx, obj)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.Application
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_pendingCleanerApplication(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Application_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Application_user(ctx, field)
+			case "applicationType":
+				return ec.fieldContext_Application_applicationType(ctx, field)
+			case "status":
+				return ec.fieldContext_Application_status(ctx, field)
+			case "message":
+				return ec.fieldContext_Application_message(ctx, field)
+			case "companyInfo":
+				return ec.fieldContext_Application_companyInfo(ctx, field)
+			case "documents":
+				return ec.fieldContext_Application_documents(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Application_rejectionReason(ctx, field)
+			case "reviewedBy":
+				return ec.fieldContext_Application_reviewedBy(ctx, field)
+			case "reviewedAt":
+				return ec.fieldContext_Application_reviewedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Application_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Application_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UserConnection_edges(ctx context.Context, field graphql.CollectedField, obj *UserConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22137,6 +22244,8 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_email(ctx, field)
 			case "applications":
 				return ec.fieldContext_User_applications(ctx, field)
+			case "pendingCleanerApplication":
+				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -29330,6 +29439,39 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "pendingCleanerApplication":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_pendingCleanerApplication(ctx, field, obj)
 				return res
 			}
 

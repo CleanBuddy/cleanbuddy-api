@@ -16,6 +16,7 @@ type User {
     email: String!
 
     applications: [Application!]! @authRequired @goField(forceResolver: true)
+    pendingCleanerApplication: Application @authRequired @goField(forceResolver: true)
 }
 
 type UserEdge {

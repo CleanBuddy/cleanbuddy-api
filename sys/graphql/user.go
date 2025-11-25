@@ -31,6 +31,30 @@ func (ur *userResolver) Applications(ctx context.Context, user *store.User) ([]*
 	return applications, nil
 }
 
+func (ur *userResolver) PendingCleanerApplication(ctx context.Context, user *store.User) (*store.Application, error) {
+	currentUser := middleware.GetCurrentUser(ctx)
+	if currentUser == nil {
+		return nil, errors.New("access forbidden, authorization required")
+	}
+
+	// Get all applications for the user
+	applications, err := ur.Store.Applications().GetByUser(ctx, currentUser.ID)
+	if err != nil {
+		ur.Logger.Printf("Error retrieving applications: %s", err)
+		return nil, errors.New("internal server error")
+	}
+
+	// Find the most recent pending cleaner application
+	for _, app := range applications {
+		if app.ApplicationType == store.ApplicationTypeCleaner && app.Status == store.ApplicationStatusPending {
+			return app, nil
+		}
+	}
+
+	// No pending cleaner application found
+	return nil, nil
+}
+
 // QUERIES RESOLVERS
 
 func (qr *queryResolver) CurrentUser(ctx context.Context) (*store.User, error) {
