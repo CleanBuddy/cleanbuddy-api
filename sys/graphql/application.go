@@ -149,6 +149,13 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		}
 	}
 
+	if input.ApplicationType == store.ApplicationTypeCompanyAdmin {
+		// Only CLIENT or PENDING_COMPANY_APPLICATION roles can submit company admin applications
+		if !currentUser.IsClient() && !currentUser.IsPendingCompanyApplication() {
+			return nil, errors.New("you cannot submit a company admin application in your current state")
+		}
+	}
+
 	// Check if user already has a pending application of this type
 	existingApps, err := mr.Store.Applications().GetByUserAndType(ctx, currentUser.ID, input.ApplicationType)
 	if err != nil {
@@ -169,6 +176,16 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		}
 		if input.Documents == nil {
 			return nil, errors.New("documents are required for cleaner applications")
+		}
+	}
+
+	// Validate required fields for company admin applications
+	if input.ApplicationType == store.ApplicationTypeCompanyAdmin {
+		if input.CompanyInfo == nil {
+			return nil, errors.New("company information is required for company admin applications")
+		}
+		if input.Documents == nil {
+			return nil, errors.New("documents are required for company admin applications")
 		}
 	}
 
@@ -288,11 +305,19 @@ func (mr *mutationResolver) SubmitApplication(ctx context.Context, input gen.Sub
 		return nil, errors.New("error creating application")
 	}
 
-	// Update user role to PENDING_CLEANER for cleaner applications
+	// Update user role based on application type
 	if input.ApplicationType == store.ApplicationTypeCleaner {
 		newRole := store.UserRolePendingCleaner
 		if _, err := mr.Store.Users().Update(ctx, currentUser.ID, nil, &newRole); err != nil {
 			mr.Logger.Printf("Error updating user role to pending_cleaner: %s", err)
+			// Don't fail the application submission, just log the error
+		}
+	}
+
+	if input.ApplicationType == store.ApplicationTypeCompanyAdmin {
+		newRole := store.UserRolePendingCompanyAdmin
+		if _, err := mr.Store.Users().Update(ctx, currentUser.ID, nil, &newRole); err != nil {
+			mr.Logger.Printf("Error updating user role to pending_company_admin: %s", err)
 			// Don't fail the application submission, just log the error
 		}
 	}
@@ -354,6 +379,49 @@ func (mr *mutationResolver) ApproveApplication(ctx context.Context, applicationI
 		return nil, errors.New("error updating user role")
 	}
 
+	// Create company record for both cleaner and company admin applications
+	if application.CompanyInfo != nil {
+		var companyType store.CompanyType
+		var totalCleaners, activeCleaners int
+
+		switch application.ApplicationType {
+		case store.ApplicationTypeCleaner:
+			// Individual cleaner company - they are the sole operator
+			companyType = store.CompanyTypeIndividual
+			totalCleaners = 1
+			activeCleaners = 1
+		case store.ApplicationTypeCompanyAdmin:
+			// Business company - can have multiple cleaners
+			companyType = store.CompanyTypeBusiness
+			totalCleaners = 0
+			activeCleaners = 0
+		}
+
+		company := &store.Company{
+			ID:                 fmt.Sprintf("cmp_%s", xid.New().String()),
+			AdminUserID:        application.UserID,
+			CompanyType:        companyType,
+			CompanyName:        application.CompanyInfo.CompanyName,
+			RegistrationNumber: application.CompanyInfo.RegistrationNumber,
+			TaxID:              application.CompanyInfo.TaxID,
+			CompanyStreet:      application.CompanyInfo.CompanyStreet,
+			CompanyCity:        application.CompanyInfo.CompanyCity,
+			CompanyPostalCode:  application.CompanyInfo.CompanyPostalCode,
+			CompanyCounty:      application.CompanyInfo.CompanyCounty,
+			CompanyCountry:     application.CompanyInfo.CompanyCountry,
+			BusinessType:       application.CompanyInfo.BusinessType,
+			Documents:          application.Documents,
+			IsActive:           true,
+			TotalCleaners:      totalCleaners,
+			ActiveCleaners:     activeCleaners,
+		}
+
+		if err := mr.Store.Companies().Create(ctx, company); err != nil {
+			mr.Logger.Printf("Error creating company: %s", err)
+			return nil, errors.New("error creating company")
+		}
+	}
+
 	// Fetch the updated application
 	updatedApplication, err := mr.Store.Applications().Get(ctx, applicationID)
 	if err != nil {
@@ -393,13 +461,22 @@ func (mr *mutationResolver) RejectApplication(ctx context.Context, applicationID
 		return nil, errors.New("error rejecting application")
 	}
 
-	// Set user role to REJECTED_CLEANER if they were PENDING_CLEANER
+	// Set user role based on application type
 	applicant, err := mr.Store.Users().Get(ctx, application.UserID)
-	if err == nil && applicant != nil && applicant.IsPendingCleaner() {
-		rejectedRole := store.UserRoleRejectedCleaner
-		if _, err := mr.Store.Users().Update(ctx, application.UserID, nil, &rejectedRole); err != nil {
-			mr.Logger.Printf("Error setting user role to rejected_cleaner: %s", err)
-			// Don't fail the rejection, just log the error
+	if err == nil && applicant != nil {
+		if applicant.IsPendingCleaner() {
+			rejectedRole := store.UserRoleRejectedCleaner
+			if _, err := mr.Store.Users().Update(ctx, application.UserID, nil, &rejectedRole); err != nil {
+				mr.Logger.Printf("Error setting user role to rejected_cleaner: %s", err)
+				// Don't fail the rejection, just log the error
+			}
+		} else if applicant.IsPendingCompanyAdmin() {
+			// Set to REJECTED_COMPANY_ADMIN role for rejected company admin applications
+			rejectedRole := store.UserRoleRejectedCompanyAdmin
+			if _, err := mr.Store.Users().Update(ctx, application.UserID, nil, &rejectedRole); err != nil {
+				mr.Logger.Printf("Error setting user role to rejected_company_admin: %s", err)
+				// Don't fail the rejection, just log the error
+			}
 		}
 	}
 

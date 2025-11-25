@@ -15,17 +15,18 @@ import (
 type storeImpl struct {
 	db *gorm.DB
 
-	authSessionStore     *authSessionStore
-	userStore            *userStore
-	applicationStore     *applicationStore
-	cleanerProfileStore  *cleanerProfileStore
-	serviceAreaStore     *serviceAreaStore
-	addressStore         *addressStore
-	serviceStore         *serviceStore
-	bookingStore         *bookingStore
-	reviewStore          *reviewStore
-	transactionStore     *transactionStore
-	availabilityStore    *availabilityStore
+	authSessionStore    *authSessionStore
+	userStore           *userStore
+	applicationStore    *applicationStore
+	cleanerProfileStore *cleanerProfileStore
+	serviceAreaStore    *serviceAreaStore
+	addressStore        *addressStore
+	serviceStore        *serviceStore
+	bookingStore        *bookingStore
+	reviewStore         *reviewStore
+	transactionStore    *transactionStore
+	availabilityStore   *availabilityStore
+	companyStore        *companyStore
 }
 
 func (sImpl *storeImpl) AuthSessions() store.AuthSessionStore {
@@ -72,6 +73,10 @@ func (sImpl *storeImpl) Availability() store.AvailabilityStore {
 	return sImpl.availabilityStore
 }
 
+func (sImpl *storeImpl) Companies() store.CompanyStore {
+	return sImpl.companyStore
+}
+
 func (sImpl *storeImpl) GetDB() interface{} {
 	return sImpl.db
 }
@@ -92,6 +97,27 @@ func Connect(connectionUrl string) (*storeImpl, error) {
 		return nil, err
 	}
 
+	// Auto-migrate all tables
+	err = db.AutoMigrate(
+		&store.User{},
+		&store.AuthSession{},
+		&store.Application{},
+		&store.Company{},
+		&store.CleanerProfile{},
+		&store.ServiceArea{},
+		&store.Address{},
+		&store.ServiceDefinition{},
+		&store.ServiceAddOnDefinition{},
+		&store.Booking{},
+		&store.Review{},
+		&store.Transaction{},
+		&store.PayoutBatch{},
+		&store.Availability{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to auto-migrate tables: %w", err)
+	}
+
 	s := &storeImpl{db: db}
 
 	s.authSessionStore = NewAuthSessionStore(s)
@@ -105,6 +131,7 @@ func Connect(connectionUrl string) (*storeImpl, error) {
 	s.reviewStore = NewReviewStore(s)
 	s.transactionStore = NewTransactionStore(s)
 	s.availabilityStore = NewAvailabilityStore(s)
+	s.companyStore = NewCompanyStore(s)
 
 	return s, nil
 }

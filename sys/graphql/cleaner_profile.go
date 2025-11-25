@@ -63,6 +63,24 @@ func (cpr *cleanerProfileResolver) Availability(ctx context.Context, profile *st
 	return availability, nil
 }
 
+func (cpr *cleanerProfileResolver) Company(ctx context.Context, profile *store.CleanerProfile) (*store.Company, error) {
+	if profile.CompanyID == nil {
+		// Try to find by admin_user_id for individual cleaners (fallback)
+		company, err := cpr.Store.Companies().GetByAdminUserID(ctx, profile.UserID)
+		if err != nil {
+			return nil, nil // No company found
+		}
+		return company, nil
+	}
+
+	company, err := cpr.Store.Companies().Get(ctx, *profile.CompanyID)
+	if err != nil {
+		cpr.Logger.Printf("Error retrieving company for cleaner: %s", err)
+		return nil, nil
+	}
+	return company, nil
+}
+
 // QUERY RESOLVERS
 
 func (qr *queryResolver) CleanerProfile(ctx context.Context, id string) (*store.CleanerProfile, error) {
@@ -239,12 +257,18 @@ func (mr *mutationResolver) CreateCleanerProfile(ctx context.Context, input gen.
 
 	// Create profile
 	profile := &store.CleanerProfile{
-		ID:          uuid.New().String(),
-		UserID:      currentUser.ID,
-		Tier:        newTier,
-		HourlyRate:  input.HourlyRate,
-		IsActive:    true,
-		IsVerified:  false,
+		ID:         uuid.New().String(),
+		UserID:     currentUser.ID,
+		Tier:       newTier,
+		HourlyRate: input.HourlyRate,
+		IsActive:   true,
+		IsVerified: false,
+	}
+
+	// Link cleaner to their company (created during application approval)
+	company, err := mr.Store.Companies().GetByAdminUserID(ctx, currentUser.ID)
+	if err == nil && company != nil {
+		profile.CompanyID = &company.ID
 	}
 
 	if input.Bio != nil {

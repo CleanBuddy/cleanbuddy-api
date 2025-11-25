@@ -9,6 +9,8 @@ type CleanerProfile {
     id: ID!
     user: User!
     userId: ID!
+    company: Company @goField(forceResolver: true)
+    companyId: ID
 
     # Profile Information
     bio: String

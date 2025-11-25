@@ -17,6 +17,7 @@ type Store interface {
 	Reviews() ReviewStore
 	Transactions() TransactionStore
 	Availability() AvailabilityStore
+	Companies() CompanyStore
 
 	// Database access for advanced operations
 	GetDB() interface{} // Returns the underlying database connection

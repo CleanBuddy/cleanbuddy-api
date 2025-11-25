@@ -17,9 +17,11 @@ const (
 
 // CleanerProfile represents the extended profile for users with cleaner role
 type CleanerProfile struct {
-	ID     string `gorm:"primaryKey;size:50;unique"`
-	User   *User  `gorm:"foreignKey:UserID"`
-	UserID string `gorm:"size:50;not null;unique;index:idx_cleaner_profile_user"`
+	ID        string   `gorm:"primaryKey;size:50;unique"`
+	User      *User    `gorm:"foreignKey:UserID"`
+	UserID    string   `gorm:"size:50;not null;unique;index:idx_cleaner_profile_user"`
+	Company   *Company `gorm:"foreignKey:CompanyID"`
+	CompanyID *string  `gorm:"size:50;index:idx_cleaner_profiles_company"`
 
 	// Profile Information
 	Bio            string  `gorm:"type:text"`
@@ -126,6 +128,7 @@ type CleanerProfileFilters struct {
 	IsVerified        *bool
 	IsAvailableToday  *bool
 	ServiceAreaIDs    []string // Filter by service areas
+	CompanyID         *string  // Filter by company
 	Limit             int
 	Offset            int
 	OrderBy           string // e.g., "average_rating DESC", "hourly_rate ASC"

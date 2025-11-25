@@ -5,19 +5,22 @@ import "time"
 type UserRole string
 
 const (
-	UserRoleClient             UserRole = "CLIENT"
-	UserRolePendingApplication UserRole = "PENDING_APPLICATION"
-	UserRolePendingCleaner     UserRole = "PENDING_CLEANER"
-	UserRoleRejectedCleaner    UserRole = "REJECTED_CLEANER"
-	UserRoleCleaner            UserRole = "CLEANER"
-	UserRoleCompanyAdmin       UserRole = "COMPANY_ADMIN"
-	UserRoleGlobalAdmin        UserRole = "GLOBAL_ADMIN"
+	UserRoleClient                    UserRole = "CLIENT"
+	UserRolePendingApplication        UserRole = "PENDING_APPLICATION"
+	UserRolePendingCleaner            UserRole = "PENDING_CLEANER"
+	UserRoleRejectedCleaner           UserRole = "REJECTED_CLEANER"
+	UserRoleCleaner                   UserRole = "CLEANER"
+	UserRolePendingCompanyApplication UserRole = "PENDING_COMPANY_APPLICATION"
+	UserRolePendingCompanyAdmin       UserRole = "PENDING_COMPANY_ADMIN"
+	UserRoleRejectedCompanyAdmin      UserRole = "REJECTED_COMPANY_ADMIN"
+	UserRoleCompanyAdmin              UserRole = "COMPANY_ADMIN"
+	UserRoleGlobalAdmin               UserRole = "GLOBAL_ADMIN"
 )
 
 type User struct {
 	ID          string   `gorm:"primaryKey;size:50;unique"`
 	DisplayName string   `gorm:"size:50;not null"`
-	Role        UserRole `gorm:"size:20;not null;default:'CLIENT'"`
+	Role        UserRole `gorm:"size:50;not null;default:'CLIENT'"`
 
 	GoogleIdentity *string `gorm:"size:256;unique"`
 	Email          string  `gorm:"size:256;not null"`
@@ -59,4 +62,19 @@ func (u *User) IsRejectedCleaner() bool {
 // IsPendingApplication checks if the user is waiting to submit application
 func (u *User) IsPendingApplication() bool {
 	return u.Role == UserRolePendingApplication
+}
+
+// IsPendingCompanyApplication checks if the user is waiting to submit company application
+func (u *User) IsPendingCompanyApplication() bool {
+	return u.Role == UserRolePendingCompanyApplication
+}
+
+// IsPendingCompanyAdmin checks if the user has a pending company admin application
+func (u *User) IsPendingCompanyAdmin() bool {
+	return u.Role == UserRolePendingCompanyAdmin
+}
+
+// IsRejectedCompanyAdmin checks if the user has a rejected company admin application
+func (u *User) IsRejectedCompanyAdmin() bool {
+	return u.Role == UserRoleRejectedCompanyAdmin
 }

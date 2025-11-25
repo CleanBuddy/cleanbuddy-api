@@ -112,6 +112,9 @@ func (cps *cleanerProfileStore) List(ctx context.Context, filters store.CleanerP
 	if filters.IsAvailableToday != nil {
 		query = query.Where("is_available_today = ?", *filters.IsAvailableToday)
 	}
+	if filters.CompanyID != nil {
+		query = query.Where("company_id = ?", *filters.CompanyID)
+	}
 
 	// Filter by service areas if provided
 	if len(filters.ServiceAreaIDs) > 0 {

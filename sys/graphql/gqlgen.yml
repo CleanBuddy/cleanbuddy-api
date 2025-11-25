@@ -93,3 +93,9 @@ models:
     model: cleanbuddy-api/res/store.AvailabilityType
   RecurrencePattern:
     model: cleanbuddy-api/res/store.RecurrencePattern
+
+  # Company
+  Company:
+    model: cleanbuddy-api/res/store.Company
+  CompanyType:
+    model: cleanbuddy-api/res/store.CompanyType

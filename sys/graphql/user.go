@@ -143,8 +143,9 @@ func (mr *mutationResolver) UpdateUserRole(ctx context.Context, role store.UserR
 
 	// Define valid role transitions
 	validTransitions := map[store.UserRole][]store.UserRole{
-		store.UserRoleClient:          {store.UserRolePendingApplication},
-		store.UserRoleRejectedCleaner: {store.UserRolePendingApplication},
+		store.UserRoleClient:               {store.UserRolePendingApplication, store.UserRolePendingCompanyApplication},
+		store.UserRoleRejectedCleaner:      {store.UserRolePendingApplication},
+		store.UserRoleRejectedCompanyAdmin: {store.UserRolePendingCompanyApplication},
 	}
 
 	newRole := role

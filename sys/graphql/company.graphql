@@ -1,0 +1,67 @@
+enum CompanyType {
+    INDIVIDUAL
+    BUSINESS
+}
+
+type Company {
+    id: ID!
+    adminUser: User! @goField(forceResolver: true)
+    companyType: CompanyType!
+
+    # Company Information
+    companyName: String!
+    registrationNumber: String!
+    taxId: String!
+    companyStreet: String!
+    companyCity: String!
+    companyPostalCode: String!
+    companyCounty: String
+    companyCountry: String!
+    businessType: String
+
+    # Documents
+    documents: ApplicationDocuments
+
+    # Status
+    isActive: Boolean!
+
+    # Stats
+    totalCleaners: Int!
+    activeCleaners: Int!
+
+    # Related Data
+    cleaners: [CleanerProfile!]! @goField(forceResolver: true)
+
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+input UpdateCompanyInput {
+    companyName: String
+    companyStreet: String
+    companyCity: String
+    companyPostalCode: String
+    companyCounty: String
+    businessType: String
+    isActive: Boolean
+}
+
+## QUERIES
+
+extend type Query {
+    # Get the current user's company (if they are a company admin)
+    myCompany: Company @authRequired
+
+    # Get a company by ID (global admin only)
+    company(id: ID!): Company @authRequired
+
+    # List all companies (global admin only)
+    companies: [Company!]! @authRequired
+}
+
+## MUTATIONS
+
+extend type Mutation {
+    # Update the current user's company (company admin only)
+    updateCompany(input: UpdateCompanyInput!): Company! @authRequired
+}

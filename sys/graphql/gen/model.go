@@ -367,6 +367,16 @@ type UpdateCleanerProfileInput struct {
 	IsAvailableToday *bool   `json:"isAvailableToday,omitempty"`
 }
 
+type UpdateCompanyInput struct {
+	CompanyName       *string `json:"companyName,omitempty"`
+	CompanyStreet     *string `json:"companyStreet,omitempty"`
+	CompanyCity       *string `json:"companyCity,omitempty"`
+	CompanyPostalCode *string `json:"companyPostalCode,omitempty"`
+	CompanyCounty     *string `json:"companyCounty,omitempty"`
+	BusinessType      *string `json:"businessType,omitempty"`
+	IsActive          *bool   `json:"isActive,omitempty"`
+}
+
 type UpdateCurrentUserInput struct {
 	DisplayName *string `json:"displayName,omitempty"`
 }
