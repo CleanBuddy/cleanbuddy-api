@@ -109,8 +109,6 @@ type CleanerProfileFiltersInput struct {
 	Tier             *store.CleanerTier `json:"tier,omitempty"`
 	MinRating        *float64           `json:"minRating,omitempty"`
 	MaxRating        *float64           `json:"maxRating,omitempty"`
-	MinHourlyRate    *int               `json:"minHourlyRate,omitempty"`
-	MaxHourlyRate    *int               `json:"maxHourlyRate,omitempty"`
 	IsActive         *bool              `json:"isActive,omitempty"`
 	IsVerified       *bool              `json:"isVerified,omitempty"`
 	IsAvailableToday *bool              `json:"isAvailableToday,omitempty"`
@@ -208,8 +206,14 @@ type CreateCleanerInviteInput struct {
 type CreateCleanerProfileInput struct {
 	Bio               *string                   `json:"bio,omitempty"`
 	ProfilePicture    *string                   `json:"profilePicture,omitempty"`
-	HourlyRate        int                       `json:"hourlyRate"`
-	ServiceAreaInputs []*CreateServiceAreaInput `json:"serviceAreaInputs"`
+	ServiceAreaInputs []*CreateServiceAreaInput `json:"serviceAreaInputs,omitempty"`
+}
+
+type CreateCompanyInput struct {
+	CompanyType store.CompanyType          `json:"companyType"`
+	CompanyInfo *CompanyInfoInput          `json:"companyInfo"`
+	Documents   *ApplicationDocumentsInput `json:"documents"`
+	Message     *string                    `json:"message,omitempty"`
 }
 
 type CreatePayoutBatchInput struct {
@@ -295,19 +299,6 @@ type ServicePriceCalculation struct {
 	EstimatedDuration float64 `json:"estimatedDuration"`
 }
 
-type SubmitApplicationInput struct {
-	ApplicationType store.ApplicationType      `json:"applicationType"`
-	Message         *string                    `json:"message,omitempty"`
-	CompanyInfo     *CompanyInfoInput          `json:"companyInfo,omitempty"`
-	Documents       *ApplicationDocumentsInput `json:"documents,omitempty"`
-}
-
-type TierRateRange struct {
-	Tier    store.CleanerTier `json:"tier"`
-	MinRate int               `json:"minRate"`
-	MaxRate int               `json:"maxRate"`
-}
-
 type TransactionConnection struct {
 	Edges       []*TransactionEdge `json:"edges"`
 	TotalCount  int                `json:"totalCount"`
@@ -379,7 +370,6 @@ type UpdateBookingInput struct {
 type UpdateCleanerProfileInput struct {
 	Bio              *string `json:"bio,omitempty"`
 	ProfilePicture   *string `json:"profilePicture,omitempty"`
-	HourlyRate       *int    `json:"hourlyRate,omitempty"`
 	IsActive         *bool   `json:"isActive,omitempty"`
 	IsAvailableToday *bool   `json:"isAvailableToday,omitempty"`
 }

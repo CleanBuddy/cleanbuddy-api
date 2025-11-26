@@ -5,16 +5,10 @@ import "time"
 type UserRole string
 
 const (
-	UserRoleClient                    UserRole = "CLIENT"
-	UserRolePendingApplication        UserRole = "PENDING_APPLICATION"
-	UserRolePendingCleaner            UserRole = "PENDING_CLEANER"
-	UserRoleRejectedCleaner           UserRole = "REJECTED_CLEANER"
-	UserRoleCleaner                   UserRole = "CLEANER"
-	UserRolePendingCompanyApplication UserRole = "PENDING_COMPANY_APPLICATION"
-	UserRolePendingCompanyAdmin       UserRole = "PENDING_COMPANY_ADMIN"
-	UserRoleRejectedCompanyAdmin      UserRole = "REJECTED_COMPANY_ADMIN"
-	UserRoleCompanyAdmin              UserRole = "COMPANY_ADMIN"
-	UserRoleGlobalAdmin               UserRole = "GLOBAL_ADMIN"
+	UserRoleClient       UserRole = "CLIENT"        // Regular customer (default sign-in)
+	UserRoleCleanerAdmin UserRole = "CLEANER_ADMIN" // Company admin (sign-in from "become a cleaner" flow)
+	UserRoleCleaner      UserRole = "CLEANER"       // Cleaner working for a company (sign-in from invite link)
+	UserRoleGlobalAdmin  UserRole = "GLOBAL_ADMIN"  // Platform administrator (set via env var)
 )
 
 type User struct {
@@ -34,12 +28,12 @@ func (u *User) IsGlobalAdmin() bool {
 	return u.Role == UserRoleGlobalAdmin
 }
 
-// IsCompanyAdmin checks if the user is a company admin
-func (u *User) IsCompanyAdmin() bool {
-	return u.Role == UserRoleCompanyAdmin
+// IsCleanerAdmin checks if the user is a cleaner admin (company owner)
+func (u *User) IsCleanerAdmin() bool {
+	return u.Role == UserRoleCleanerAdmin
 }
 
-// IsCleaner checks if the user is a cleaner
+// IsCleaner checks if the user is a cleaner (invited to a company)
 func (u *User) IsCleaner() bool {
 	return u.Role == UserRoleCleaner
 }
@@ -47,34 +41,4 @@ func (u *User) IsCleaner() bool {
 // IsClient checks if the user is a basic client
 func (u *User) IsClient() bool {
 	return u.Role == UserRoleClient
-}
-
-// IsPendingCleaner checks if the user has a pending cleaner application
-func (u *User) IsPendingCleaner() bool {
-	return u.Role == UserRolePendingCleaner
-}
-
-// IsRejectedCleaner checks if the user has a rejected cleaner application
-func (u *User) IsRejectedCleaner() bool {
-	return u.Role == UserRoleRejectedCleaner
-}
-
-// IsPendingApplication checks if the user is waiting to submit application
-func (u *User) IsPendingApplication() bool {
-	return u.Role == UserRolePendingApplication
-}
-
-// IsPendingCompanyApplication checks if the user is waiting to submit company application
-func (u *User) IsPendingCompanyApplication() bool {
-	return u.Role == UserRolePendingCompanyApplication
-}
-
-// IsPendingCompanyAdmin checks if the user has a pending company admin application
-func (u *User) IsPendingCompanyAdmin() bool {
-	return u.Role == UserRolePendingCompanyAdmin
-}
-
-// IsRejectedCompanyAdmin checks if the user has a rejected company admin application
-func (u *User) IsRejectedCompanyAdmin() bool {
-	return u.Role == UserRoleRejectedCompanyAdmin
 }

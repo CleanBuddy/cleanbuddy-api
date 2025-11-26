@@ -18,7 +18,6 @@ type CleanerProfile {
 
     # Tier and Performance
     tier: CleanerTier!
-    hourlyRate: Int! # Rate in bani (100 bani = 1 RON)
     totalBookings: Int!
     completedBookings: Int!
     cancelledBookings: Int!
@@ -55,23 +54,15 @@ type CleanerProfileConnection {
     totalCount: Int!
 }
 
-type TierRateRange {
-    tier: CleanerTier!
-    minRate: Int!
-    maxRate: Int!
-}
-
 input CreateCleanerProfileInput {
     bio: String
     profilePicture: String
-    hourlyRate: Int!
-    serviceAreaInputs: [CreateServiceAreaInput!]!
+    serviceAreaInputs: [CreateServiceAreaInput!]
 }
 
 input UpdateCleanerProfileInput {
     bio: String
     profilePicture: String
-    hourlyRate: Int
     isActive: Boolean
     isAvailableToday: Boolean
 }
@@ -80,8 +71,6 @@ input CleanerProfileFiltersInput {
     tier: CleanerTier
     minRating: Float
     maxRating: Float
-    minHourlyRate: Int
-    maxHourlyRate: Int
     isActive: Boolean
     isVerified: Boolean
     isAvailableToday: Boolean
@@ -121,9 +110,6 @@ extend type Query {
         postalCode: String
         filters: CleanerProfileFiltersInput
     ): [CleanerProfile!]! @authRequired
-
-    # Get tier rate ranges
-    tierRateRanges: [TierRateRange!]!
 }
 
 ## MUTATIONS

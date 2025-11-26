@@ -18,6 +18,11 @@ const (
 	userDisplayNamePlaceholderDefault string = "User"
 )
 
+// intPtr returns a pointer to an int
+func intPtr(i int) *int {
+	return &i
+}
+
 // MUTATION RESOLVERS
 
 func (mr *mutationResolver) AuthWithRefreshToken(ctx context.Context, token string) (*gen.AuthResult, error) {
@@ -82,7 +87,7 @@ func (mr *mutationResolver) AuthWithRefreshToken(ctx context.Context, token stri
 	return &gen.AuthResult{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code string, kind gen.AuthIdentityKind, intent *string) (*gen.AuthResult, error) {
+func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code string, kind gen.AuthIdentityKind, intent *string, inviteToken *string) (*gen.AuthResult, error) {
 	currentUser := middleware.GetCurrentUser(ctx)
 	if currentUser != nil {
 		return nil, errors.New("access forbidden, session already associated with a user")
@@ -102,7 +107,24 @@ func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code s
 		}
 	}
 
-	// 2. Detect existing user
+	// 2. Validate invite token if provided (for invite flow)
+	var validInvite *store.CleanerInvite
+	if intent != nil && *intent == "invite" && inviteToken != nil && *inviteToken != "" {
+		invite, err := mr.Store.CleanerInvites().GetByToken(ctx, *inviteToken)
+		if err != nil || invite == nil {
+			mr.Logger.Printf("Invalid invite token: %s", *inviteToken)
+			return nil, errors.New("invalid or expired invite link")
+		}
+		if invite.Status != store.CleanerInviteStatusPending {
+			return nil, errors.New("this invite has already been used or revoked")
+		}
+		if invite.IsExpired() {
+			return nil, errors.New("this invite has expired")
+		}
+		validInvite = invite
+	}
+
+	// 3. Detect existing user
 
 	var associatedUser *store.User
 	var (
@@ -129,9 +151,14 @@ func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code s
 		}
 
 		// Determine role based on intent
+		// - nil/empty → CLIENT (regular customer)
+		// - "cleaner" or "company" → CLEANER_ADMIN (company owner coming from "become a cleaner" / "for cleaners" flow)
+		// - "invite" + valid token → CLEANER (cleaner joining via invite link)
 		var userRole store.UserRole
-		if intent != nil && *intent == "cleaner" {
-			userRole = store.UserRolePendingApplication
+		if validInvite != nil {
+			userRole = store.UserRoleCleaner
+		} else if intent != nil && (*intent == "cleaner" || *intent == "company") {
+			userRole = store.UserRoleCleanerAdmin
 		} else {
 			userRole = store.UserRoleClient
 		}
@@ -140,6 +167,36 @@ func (mr *mutationResolver) AuthWithIdentityProvider(ctx context.Context, code s
 		if err != nil {
 			mr.Logger.Printf("Error creating user: %s", err)
 			return nil, errors.New("error creating user")
+		}
+
+		// If this is an invite flow, auto-create the cleaner profile and mark invite as accepted
+		if validInvite != nil {
+			// Create cleaner profile linked to the company
+			profileID := fmt.Sprintf("cp_%s", xid.New().String())
+			cleanerProfile := &store.CleanerProfile{
+				ID:        profileID,
+				UserID:    newUser.ID,
+				CompanyID: &validInvite.CompanyID,
+				Tier:      store.CleanerTierNew,
+				IsActive:  true,
+			}
+			if err := mr.Store.CleanerProfiles().Create(ctx, cleanerProfile); err != nil {
+				mr.Logger.Printf("Error creating cleaner profile for invited user: %s", err)
+				return nil, errors.New("error setting up cleaner profile")
+			}
+
+			// Mark invite as accepted
+			if err := mr.Store.CleanerInvites().MarkAsAccepted(ctx, validInvite.ID, newUser.ID); err != nil {
+				mr.Logger.Printf("Error marking invite as accepted: %s", err)
+			}
+
+			// Update company cleaner stats
+			if err := mr.Store.Companies().UpdateStats(ctx, validInvite.CompanyID, store.CompanyStats{
+				TotalCleaners:  intPtr(1),
+				ActiveCleaners: intPtr(1),
+			}); err != nil {
+				mr.Logger.Printf("Error updating company stats: %s", err)
+			}
 		}
 
 		// Register user with mail service if available

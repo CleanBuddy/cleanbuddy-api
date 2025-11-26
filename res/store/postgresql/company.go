@@ -77,6 +77,36 @@ func (cs *companyStore) List(ctx context.Context) ([]*store.Company, error) {
 	return companies, nil
 }
 
+func (cs *companyStore) ListByStatus(ctx context.Context, status store.CompanyStatus) ([]*store.Company, error) {
+	var companies []*store.Company
+	result := cs.db.WithContext(ctx).Where("status = ?", status).Order("created_at DESC").Find(&companies)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return companies, nil
+}
+
+func (cs *companyStore) UpdateStatus(ctx context.Context, id string, status store.CompanyStatus, rejectionReason *string) error {
+	updates := map[string]interface{}{
+		"status": status,
+	}
+	if rejectionReason != nil {
+		updates["rejection_reason"] = *rejectionReason
+	}
+
+	result := cs.db.WithContext(ctx).Model(&store.Company{}).
+		Where("id = ?", id).
+		Updates(updates)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return fmt.Errorf("company not found (id: %s)", id)
+	}
+	return nil
+}
+
 func (cs *companyStore) UpdateStats(ctx context.Context, companyID string, stats store.CompanyStats) error {
 	updates := make(map[string]interface{})
 

@@ -3,10 +3,47 @@ enum CompanyType {
     BUSINESS
 }
 
+enum CompanyStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+# Documents uploaded during company application
+type ApplicationDocuments {
+    identityDocumentUrl: String!
+    businessRegistrationUrl: String
+    insuranceCertificateUrl: String
+    additionalDocuments: [String!]
+}
+
+input CompanyInfoInput {
+    companyName: String!
+    registrationNumber: String!
+    taxId: String!
+    companyStreet: String!
+    companyCity: String!
+    companyPostalCode: String!
+    companyCounty: String
+    companyCountry: String!
+    businessType: String
+}
+
+input ApplicationDocumentsInput {
+    identityDocument: Upload!
+    businessRegistration: Upload
+    insuranceCertificate: Upload
+    additionalDocuments: [Upload!]
+}
+
 type Company {
     id: ID!
     adminUser: User! @goField(forceResolver: true)
     companyType: CompanyType!
+
+    # Approval Status (drives UI state)
+    status: CompanyStatus!
+    rejectionReason: String
 
     # Company Information
     companyName: String!
@@ -21,6 +58,9 @@ type Company {
 
     # Documents
     documents: ApplicationDocuments
+
+    # Message from applicant
+    message: String
 
     # Status
     isActive: Boolean!
@@ -46,10 +86,17 @@ input UpdateCompanyInput {
     isActive: Boolean
 }
 
+input CreateCompanyInput {
+    companyType: CompanyType!
+    companyInfo: CompanyInfoInput!
+    documents: ApplicationDocumentsInput!
+    message: String
+}
+
 ## QUERIES
 
 extend type Query {
-    # Get the current user's company (if they are a company admin)
+    # Get the current user's company (if they are a cleaner admin)
     myCompany: Company @authRequired
 
     # Get a company by ID (global admin only)
@@ -57,11 +104,23 @@ extend type Query {
 
     # List all companies (global admin only)
     companies: [Company!]! @authRequired
+
+    # List pending companies awaiting approval (global admin only)
+    pendingCompanies: [Company!]! @authRequired
 }
 
 ## MUTATIONS
 
 extend type Mutation {
-    # Update the current user's company (company admin only)
+    # Create a new company (CLEANER_ADMIN only, must not have existing company)
+    createCompany(input: CreateCompanyInput!): Company! @authRequired
+
+    # Update the current user's company (cleaner admin only)
     updateCompany(input: UpdateCompanyInput!): Company! @authRequired
+
+    # Approve a company (global admin only)
+    approveCompany(companyId: ID!): Company! @authRequired
+
+    # Reject a company (global admin only)
+    rejectCompany(companyId: ID!, reason: String): Company! @authRequired
 }

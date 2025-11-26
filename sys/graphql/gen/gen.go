@@ -40,7 +40,6 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Application() ApplicationResolver
 	Booking() BookingResolver
 	CleanerInvite() CleanerInviteResolver
 	CleanerProfile() CleanerProfileResolver
@@ -82,21 +81,6 @@ type ComplexityRoot struct {
 		UpdatedAt          func(childComplexity int) int
 		User               func(childComplexity int) int
 		UserID             func(childComplexity int) int
-	}
-
-	Application struct {
-		ApplicationType func(childComplexity int) int
-		CompanyInfo     func(childComplexity int) int
-		CreatedAt       func(childComplexity int) int
-		Documents       func(childComplexity int) int
-		ID              func(childComplexity int) int
-		Message         func(childComplexity int) int
-		RejectionReason func(childComplexity int) int
-		ReviewedAt      func(childComplexity int) int
-		ReviewedBy      func(childComplexity int) int
-		Status          func(childComplexity int) int
-		UpdatedAt       func(childComplexity int) int
-		User            func(childComplexity int) int
 	}
 
 	ApplicationDocuments struct {
@@ -217,7 +201,6 @@ type ComplexityRoot struct {
 		CompanyID         func(childComplexity int) int
 		CompletedBookings func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
-		HourlyRate        func(childComplexity int) int
 		ID                func(childComplexity int) int
 		IdentityVerified  func(childComplexity int) int
 		IsActive          func(childComplexity int) int
@@ -262,30 +245,21 @@ type ComplexityRoot struct {
 		Documents          func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		IsActive           func(childComplexity int) int
+		Message            func(childComplexity int) int
 		RegistrationNumber func(childComplexity int) int
+		RejectionReason    func(childComplexity int) int
+		Status             func(childComplexity int) int
 		TaxID              func(childComplexity int) int
 		TotalCleaners      func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
-	}
-
-	CompanyInfo struct {
-		BusinessType       func(childComplexity int) int
-		CompanyCity        func(childComplexity int) int
-		CompanyCountry     func(childComplexity int) int
-		CompanyCounty      func(childComplexity int) int
-		CompanyName        func(childComplexity int) int
-		CompanyPostalCode  func(childComplexity int) int
-		CompanyStreet      func(childComplexity int) int
-		RegistrationNumber func(childComplexity int) int
-		TaxID              func(childComplexity int) int
 	}
 
 	Mutation struct {
 		AcceptCleanerInvite      func(childComplexity int, token string) int
 		AddCleanerResponse       func(childComplexity int, input AddCleanerResponseInput) int
 		AddServiceArea           func(childComplexity int, input CreateServiceAreaInput) int
-		ApproveApplication       func(childComplexity int, applicationID string) int
-		AuthWithIdentityProvider func(childComplexity int, code string, kind AuthIdentityKind, intent *string) int
+		ApproveCompany           func(childComplexity int, companyID string) int
+		AuthWithIdentityProvider func(childComplexity int, code string, kind AuthIdentityKind, intent *string, inviteToken *string) int
 		AuthWithRefreshToken     func(childComplexity int, token string) int
 		BulkCreateAvailability   func(childComplexity int, inputs []*CreateAvailabilityInput) int
 		CancelBooking            func(childComplexity int, input CancelBookingInput) int
@@ -297,6 +271,7 @@ type ComplexityRoot struct {
 		CreateBooking            func(childComplexity int, input CreateBookingInput) int
 		CreateCleanerInvite      func(childComplexity int, input *CreateCleanerInviteInput) int
 		CreateCleanerProfile     func(childComplexity int, input CreateCleanerProfileInput) int
+		CreateCompany            func(childComplexity int, input CreateCompanyInput) int
 		CreatePayoutBatch        func(childComplexity int, input CreatePayoutBatchInput) int
 		CreateReview             func(childComplexity int, input CreateReviewInput) int
 		CreateServiceDefinition  func(childComplexity int, input CreateServiceDefinitionInput) int
@@ -311,12 +286,11 @@ type ComplexityRoot struct {
 		MarkReviewHelpful        func(childComplexity int, reviewID string, helpful bool) int
 		ModerateReview           func(childComplexity int, input ModerateReviewInput) int
 		ProcessPayoutBatch       func(childComplexity int, id string) int
-		RejectApplication        func(childComplexity int, applicationID string, reason *string) int
+		RejectCompany            func(childComplexity int, companyID string, reason *string) int
 		RevokeCleanerInvite      func(childComplexity int, id string) int
 		SetDefaultAddress        func(childComplexity int, id string) int
 		SignOut                  func(childComplexity int) int
 		StartBooking             func(childComplexity int, id string) int
-		SubmitApplication        func(childComplexity int, input SubmitApplicationInput) int
 		UpdateAddOnDefinition    func(childComplexity int, input UpdateAddOnDefinitionInput) int
 		UpdateAddress            func(childComplexity int, input UpdateAddressInput) int
 		UpdateAvailability       func(childComplexity int, input UpdateAvailabilityInput) int
@@ -328,7 +302,6 @@ type ComplexityRoot struct {
 		UpdateReview             func(childComplexity int, input UpdateReviewInput) int
 		UpdateServiceArea        func(childComplexity int, input UpdateServiceAreaInput) int
 		UpdateServiceDefinition  func(childComplexity int, input UpdateServiceDefinitionInput) int
-		UpdateUserRole           func(childComplexity int, role store.UserRole) int
 	}
 
 	PayoutBatch struct {
@@ -353,7 +326,6 @@ type ComplexityRoot struct {
 		Address                      func(childComplexity int, id string) int
 		AllBookings                  func(childComplexity int, filters *BookingFiltersInput, limit *int, offset *int, orderBy *string) int
 		AllTransactions              func(childComplexity int, filters *TransactionFiltersInput, limit *int, offset *int, orderBy *string) int
-		Application                  func(childComplexity int, id string) int
 		Availability                 func(childComplexity int, id string) int
 		AvailabilityForCleaner       func(childComplexity int, cleanerProfileID string, filters *AvailabilityFiltersInput, limit *int, offset *int) int
 		AvailableCleaners            func(childComplexity int, date time.Time, startTime string, duration float64, city string, neighborhood *string, postalCode *string, filters *CleanerProfileFiltersInput) int
@@ -367,10 +339,8 @@ type ComplexityRoot struct {
 		Companies                    func(childComplexity int) int
 		Company                      func(childComplexity int, id string) int
 		CurrentUser                  func(childComplexity int) int
-		GenerateDocumentSignedURL    func(childComplexity int, documentURL string) int
 		IsCleanerAvailable           func(childComplexity int, input CheckAvailabilityInput) int
 		MyAddresses                  func(childComplexity int) int
-		MyApplications               func(childComplexity int) int
 		MyAvailability               func(childComplexity int, filters *AvailabilityFiltersInput, limit *int, offset *int) int
 		MyBookings                   func(childComplexity int, filters *BookingFiltersInput, limit *int, offset *int, orderBy *string) int
 		MyCleanerProfile             func(childComplexity int) int
@@ -385,7 +355,7 @@ type ComplexityRoot struct {
 		MyTransactions               func(childComplexity int, filters *TransactionFiltersInput, limit *int, offset *int, orderBy *string) int
 		PayoutBatch                  func(childComplexity int, id string) int
 		PayoutBatches                func(childComplexity int, limit *int, offset *int) int
-		PendingApplications          func(childComplexity int) int
+		PendingCompanies             func(childComplexity int) int
 		Review                       func(childComplexity int, id string) int
 		ReviewByBooking              func(childComplexity int, bookingID string) int
 		ReviewsForCleaner            func(childComplexity int, cleanerProfileID string, filters *ReviewFiltersInput, limit *int, offset *int, orderBy *string) int
@@ -395,7 +365,6 @@ type ComplexityRoot struct {
 		ServiceAreasByCleanerProfile func(childComplexity int, cleanerProfileID string) int
 		ServiceDefinition            func(childComplexity int, typeArg store.ServiceType) int
 		ServiceDefinitions           func(childComplexity int, activeOnly *bool) int
-		TierRateRanges               func(childComplexity int) int
 		Transaction                  func(childComplexity int, id string) int
 		TransactionByStripePaymentID func(childComplexity int, stripePaymentID string) int
 		TransactionsByBooking        func(childComplexity int, bookingID string) int
@@ -493,12 +462,6 @@ type ComplexityRoot struct {
 		TravelFee         func(childComplexity int) int
 	}
 
-	TierRateRange struct {
-		MaxRate func(childComplexity int) int
-		MinRate func(childComplexity int) int
-		Tier    func(childComplexity int) int
-	}
-
 	Transaction struct {
 		Amount           func(childComplexity int) int
 		Booking          func(childComplexity int) int
@@ -540,12 +503,12 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Applications              func(childComplexity int) int
-		DisplayName               func(childComplexity int) int
-		Email                     func(childComplexity int) int
-		ID                        func(childComplexity int) int
-		PendingCleanerApplication func(childComplexity int) int
-		Role                      func(childComplexity int) int
+		CleanerProfile func(childComplexity int) int
+		Company        func(childComplexity int) int
+		DisplayName    func(childComplexity int) int
+		Email          func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Role           func(childComplexity int) int
 	}
 
 	UserConnection struct {
@@ -566,11 +529,6 @@ type ComplexityRoot struct {
 	}
 }
 
-type ApplicationResolver interface {
-	User(ctx context.Context, obj *store.Application) (*store.User, error)
-
-	ReviewedBy(ctx context.Context, obj *store.Application) (*store.User, error)
-}
 type BookingResolver interface {
 	ServiceAddOns(ctx context.Context, obj *store.Booking) ([]store.ServiceAddOn, error)
 
@@ -602,10 +560,7 @@ type MutationResolver interface {
 	UpdateAddress(ctx context.Context, input UpdateAddressInput) (*store.Address, error)
 	DeleteAddress(ctx context.Context, id string) (*scalar.Void, error)
 	SetDefaultAddress(ctx context.Context, id string) (*store.Address, error)
-	SubmitApplication(ctx context.Context, input SubmitApplicationInput) (*store.Application, error)
-	ApproveApplication(ctx context.Context, applicationID string) (*store.Application, error)
-	RejectApplication(ctx context.Context, applicationID string, reason *string) (*store.Application, error)
-	AuthWithIdentityProvider(ctx context.Context, code string, kind AuthIdentityKind, intent *string) (*AuthResult, error)
+	AuthWithIdentityProvider(ctx context.Context, code string, kind AuthIdentityKind, intent *string, inviteToken *string) (*AuthResult, error)
 	AuthWithRefreshToken(ctx context.Context, token string) (*AuthResult, error)
 	CreateAvailability(ctx context.Context, input CreateAvailabilityInput) (*store.Availability, error)
 	UpdateAvailability(ctx context.Context, input UpdateAvailabilityInput) (*store.Availability, error)
@@ -625,7 +580,10 @@ type MutationResolver interface {
 	UpdateCleanerProfile(ctx context.Context, input UpdateCleanerProfileInput) (*store.CleanerProfile, error)
 	DeleteCleanerProfile(ctx context.Context) (*scalar.Void, error)
 	UpdateCleanerTier(ctx context.Context, profileID string, tier store.CleanerTier) (*store.CleanerProfile, error)
+	CreateCompany(ctx context.Context, input CreateCompanyInput) (*store.Company, error)
 	UpdateCompany(ctx context.Context, input UpdateCompanyInput) (*store.Company, error)
+	ApproveCompany(ctx context.Context, companyID string) (*store.Company, error)
+	RejectCompany(ctx context.Context, companyID string, reason *string) (*store.Company, error)
 	CreateReview(ctx context.Context, input CreateReviewInput) (*store.Review, error)
 	UpdateReview(ctx context.Context, input UpdateReviewInput) (*store.Review, error)
 	DeleteReview(ctx context.Context, id string) (*scalar.Void, error)
@@ -645,16 +603,11 @@ type MutationResolver interface {
 	SignOut(ctx context.Context) (*scalar.Void, error)
 	DeleteCurrentUser(ctx context.Context) (*scalar.Void, error)
 	UpdateCurrentUser(ctx context.Context, input UpdateCurrentUserInput) (*store.User, error)
-	UpdateUserRole(ctx context.Context, role store.UserRole) (*store.User, error)
 }
 type QueryResolver interface {
 	Address(ctx context.Context, id string) (*store.Address, error)
 	MyAddresses(ctx context.Context) ([]*store.Address, error)
 	MyDefaultAddress(ctx context.Context) (*store.Address, error)
-	Application(ctx context.Context, id string) (*store.Application, error)
-	MyApplications(ctx context.Context) ([]*store.Application, error)
-	PendingApplications(ctx context.Context) ([]*store.Application, error)
-	GenerateDocumentSignedURL(ctx context.Context, documentURL string) (string, error)
 	Availability(ctx context.Context, id string) (*store.Availability, error)
 	AvailabilityForCleaner(ctx context.Context, cleanerProfileID string, filters *AvailabilityFiltersInput, limit *int, offset *int) ([]*store.Availability, error)
 	MyAvailability(ctx context.Context, filters *AvailabilityFiltersInput, limit *int, offset *int) ([]*store.Availability, error)
@@ -673,10 +626,10 @@ type QueryResolver interface {
 	MyCleanerProfile(ctx context.Context) (*store.CleanerProfile, error)
 	SearchCleaners(ctx context.Context, filters *CleanerProfileFiltersInput, limit *int, offset *int, orderBy *string) (*CleanerProfileConnection, error)
 	AvailableCleaners(ctx context.Context, date time.Time, startTime string, duration float64, city string, neighborhood *string, postalCode *string, filters *CleanerProfileFiltersInput) ([]*store.CleanerProfile, error)
-	TierRateRanges(ctx context.Context) ([]*TierRateRange, error)
 	MyCompany(ctx context.Context) (*store.Company, error)
 	Company(ctx context.Context, id string) (*store.Company, error)
 	Companies(ctx context.Context) ([]*store.Company, error)
+	PendingCompanies(ctx context.Context) ([]*store.Company, error)
 	Review(ctx context.Context, id string) (*store.Review, error)
 	ReviewByBooking(ctx context.Context, bookingID string) (*store.Review, error)
 	ReviewsForCleaner(ctx context.Context, cleanerProfileID string, filters *ReviewFiltersInput, limit *int, offset *int, orderBy *string) (*ReviewConnection, error)
@@ -704,8 +657,8 @@ type QueryResolver interface {
 	CurrentUser(ctx context.Context) (*store.User, error)
 }
 type UserResolver interface {
-	Applications(ctx context.Context, obj *store.User) ([]*store.Application, error)
-	PendingCleanerApplication(ctx context.Context, obj *store.User) (*store.Application, error)
+	Company(ctx context.Context, obj *store.User) (*store.Company, error)
+	CleanerProfile(ctx context.Context, obj *store.User) (*store.CleanerProfile, error)
 }
 
 type executableSchema struct {
@@ -866,79 +819,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Address.UserID(childComplexity), true
-
-	case "Application.applicationType":
-		if e.complexity.Application.ApplicationType == nil {
-			break
-		}
-
-		return e.complexity.Application.ApplicationType(childComplexity), true
-	case "Application.companyInfo":
-		if e.complexity.Application.CompanyInfo == nil {
-			break
-		}
-
-		return e.complexity.Application.CompanyInfo(childComplexity), true
-	case "Application.createdAt":
-		if e.complexity.Application.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Application.CreatedAt(childComplexity), true
-	case "Application.documents":
-		if e.complexity.Application.Documents == nil {
-			break
-		}
-
-		return e.complexity.Application.Documents(childComplexity), true
-	case "Application.id":
-		if e.complexity.Application.ID == nil {
-			break
-		}
-
-		return e.complexity.Application.ID(childComplexity), true
-	case "Application.message":
-		if e.complexity.Application.Message == nil {
-			break
-		}
-
-		return e.complexity.Application.Message(childComplexity), true
-	case "Application.rejectionReason":
-		if e.complexity.Application.RejectionReason == nil {
-			break
-		}
-
-		return e.complexity.Application.RejectionReason(childComplexity), true
-	case "Application.reviewedAt":
-		if e.complexity.Application.ReviewedAt == nil {
-			break
-		}
-
-		return e.complexity.Application.ReviewedAt(childComplexity), true
-	case "Application.reviewedBy":
-		if e.complexity.Application.ReviewedBy == nil {
-			break
-		}
-
-		return e.complexity.Application.ReviewedBy(childComplexity), true
-	case "Application.status":
-		if e.complexity.Application.Status == nil {
-			break
-		}
-
-		return e.complexity.Application.Status(childComplexity), true
-	case "Application.updatedAt":
-		if e.complexity.Application.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Application.UpdatedAt(childComplexity), true
-	case "Application.user":
-		if e.complexity.Application.User == nil {
-			break
-		}
-
-		return e.complexity.Application.User(childComplexity), true
 
 	case "ApplicationDocuments.additionalDocuments":
 		if e.complexity.ApplicationDocuments.AdditionalDocuments == nil {
@@ -1489,12 +1369,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CleanerProfile.CreatedAt(childComplexity), true
-	case "CleanerProfile.hourlyRate":
-		if e.complexity.CleanerProfile.HourlyRate == nil {
-			break
-		}
-
-		return e.complexity.CleanerProfile.HourlyRate(childComplexity), true
 	case "CleanerProfile.id":
 		if e.complexity.CleanerProfile.ID == nil {
 			break
@@ -1708,12 +1582,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Company.IsActive(childComplexity), true
+	case "Company.message":
+		if e.complexity.Company.Message == nil {
+			break
+		}
+
+		return e.complexity.Company.Message(childComplexity), true
 	case "Company.registrationNumber":
 		if e.complexity.Company.RegistrationNumber == nil {
 			break
 		}
 
 		return e.complexity.Company.RegistrationNumber(childComplexity), true
+	case "Company.rejectionReason":
+		if e.complexity.Company.RejectionReason == nil {
+			break
+		}
+
+		return e.complexity.Company.RejectionReason(childComplexity), true
+	case "Company.status":
+		if e.complexity.Company.Status == nil {
+			break
+		}
+
+		return e.complexity.Company.Status(childComplexity), true
 	case "Company.taxId":
 		if e.complexity.Company.TaxID == nil {
 			break
@@ -1732,61 +1624,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Company.UpdatedAt(childComplexity), true
-
-	case "CompanyInfo.businessType":
-		if e.complexity.CompanyInfo.BusinessType == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.BusinessType(childComplexity), true
-	case "CompanyInfo.companyCity":
-		if e.complexity.CompanyInfo.CompanyCity == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.CompanyCity(childComplexity), true
-	case "CompanyInfo.companyCountry":
-		if e.complexity.CompanyInfo.CompanyCountry == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.CompanyCountry(childComplexity), true
-	case "CompanyInfo.companyCounty":
-		if e.complexity.CompanyInfo.CompanyCounty == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.CompanyCounty(childComplexity), true
-	case "CompanyInfo.companyName":
-		if e.complexity.CompanyInfo.CompanyName == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.CompanyName(childComplexity), true
-	case "CompanyInfo.companyPostalCode":
-		if e.complexity.CompanyInfo.CompanyPostalCode == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.CompanyPostalCode(childComplexity), true
-	case "CompanyInfo.companyStreet":
-		if e.complexity.CompanyInfo.CompanyStreet == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.CompanyStreet(childComplexity), true
-	case "CompanyInfo.registrationNumber":
-		if e.complexity.CompanyInfo.RegistrationNumber == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.RegistrationNumber(childComplexity), true
-	case "CompanyInfo.taxId":
-		if e.complexity.CompanyInfo.TaxID == nil {
-			break
-		}
-
-		return e.complexity.CompanyInfo.TaxID(childComplexity), true
 
 	case "Mutation.acceptCleanerInvite":
 		if e.complexity.Mutation.AcceptCleanerInvite == nil {
@@ -1821,17 +1658,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.AddServiceArea(childComplexity, args["input"].(CreateServiceAreaInput)), true
-	case "Mutation.approveApplication":
-		if e.complexity.Mutation.ApproveApplication == nil {
+	case "Mutation.approveCompany":
+		if e.complexity.Mutation.ApproveCompany == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_approveApplication_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_approveCompany_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ApproveApplication(childComplexity, args["applicationId"].(string)), true
+		return e.complexity.Mutation.ApproveCompany(childComplexity, args["companyId"].(string)), true
 	case "Mutation.authWithIdentityProvider":
 		if e.complexity.Mutation.AuthWithIdentityProvider == nil {
 			break
@@ -1842,7 +1679,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AuthWithIdentityProvider(childComplexity, args["code"].(string), args["kind"].(AuthIdentityKind), args["intent"].(*string)), true
+		return e.complexity.Mutation.AuthWithIdentityProvider(childComplexity, args["code"].(string), args["kind"].(AuthIdentityKind), args["intent"].(*string), args["inviteToken"].(*string)), true
 	case "Mutation.authWithRefreshToken":
 		if e.complexity.Mutation.AuthWithRefreshToken == nil {
 			break
@@ -1964,6 +1801,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateCleanerProfile(childComplexity, args["input"].(CreateCleanerProfileInput)), true
+	case "Mutation.createCompany":
+		if e.complexity.Mutation.CreateCompany == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCompany_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateCompany(childComplexity, args["input"].(CreateCompanyInput)), true
 	case "Mutation.createPayoutBatch":
 		if e.complexity.Mutation.CreatePayoutBatch == nil {
 			break
@@ -2108,17 +1956,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ProcessPayoutBatch(childComplexity, args["id"].(string)), true
-	case "Mutation.rejectApplication":
-		if e.complexity.Mutation.RejectApplication == nil {
+	case "Mutation.rejectCompany":
+		if e.complexity.Mutation.RejectCompany == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_rejectApplication_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_rejectCompany_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RejectApplication(childComplexity, args["applicationId"].(string), args["reason"].(*string)), true
+		return e.complexity.Mutation.RejectCompany(childComplexity, args["companyId"].(string), args["reason"].(*string)), true
 	case "Mutation.revokeCleanerInvite":
 		if e.complexity.Mutation.RevokeCleanerInvite == nil {
 			break
@@ -2158,17 +2006,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.StartBooking(childComplexity, args["id"].(string)), true
-	case "Mutation.submitApplication":
-		if e.complexity.Mutation.SubmitApplication == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_submitApplication_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.SubmitApplication(childComplexity, args["input"].(SubmitApplicationInput)), true
 	case "Mutation.updateAddOnDefinition":
 		if e.complexity.Mutation.UpdateAddOnDefinition == nil {
 			break
@@ -2290,17 +2127,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateServiceDefinition(childComplexity, args["input"].(UpdateServiceDefinitionInput)), true
-	case "Mutation.updateUserRole":
-		if e.complexity.Mutation.UpdateUserRole == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateUserRole_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateUserRole(childComplexity, args["role"].(store.UserRole)), true
 
 	case "PayoutBatch.completedAt":
 		if e.complexity.PayoutBatch.CompletedAt == nil {
@@ -2436,17 +2262,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.AllTransactions(childComplexity, args["filters"].(*TransactionFiltersInput), args["limit"].(*int), args["offset"].(*int), args["orderBy"].(*string)), true
-	case "Query.application":
-		if e.complexity.Query.Application == nil {
-			break
-		}
-
-		args, err := ec.field_Query_application_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Application(childComplexity, args["id"].(string)), true
 	case "Query.availability":
 		if e.complexity.Query.Availability == nil {
 			break
@@ -2580,17 +2395,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.CurrentUser(childComplexity), true
-	case "Query.generateDocumentSignedUrl":
-		if e.complexity.Query.GenerateDocumentSignedURL == nil {
-			break
-		}
-
-		args, err := ec.field_Query_generateDocumentSignedUrl_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GenerateDocumentSignedURL(childComplexity, args["documentUrl"].(string)), true
 	case "Query.isCleanerAvailable":
 		if e.complexity.Query.IsCleanerAvailable == nil {
 			break
@@ -2608,12 +2412,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.MyAddresses(childComplexity), true
-	case "Query.myApplications":
-		if e.complexity.Query.MyApplications == nil {
-			break
-		}
-
-		return e.complexity.Query.MyApplications(childComplexity), true
 	case "Query.myAvailability":
 		if e.complexity.Query.MyAvailability == nil {
 			break
@@ -2738,12 +2536,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.PayoutBatches(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
-	case "Query.pendingApplications":
-		if e.complexity.Query.PendingApplications == nil {
+	case "Query.pendingCompanies":
+		if e.complexity.Query.PendingCompanies == nil {
 			break
 		}
 
-		return e.complexity.Query.PendingApplications(childComplexity), true
+		return e.complexity.Query.PendingCompanies(childComplexity), true
 	case "Query.review":
 		if e.complexity.Query.Review == nil {
 			break
@@ -2843,12 +2641,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.ServiceDefinitions(childComplexity, args["activeOnly"].(*bool)), true
-	case "Query.tierRateRanges":
-		if e.complexity.Query.TierRateRanges == nil {
-			break
-		}
-
-		return e.complexity.Query.TierRateRanges(childComplexity), true
 	case "Query.transaction":
 		if e.complexity.Query.Transaction == nil {
 			break
@@ -3331,25 +3123,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ServicePriceCalculation.TravelFee(childComplexity), true
 
-	case "TierRateRange.maxRate":
-		if e.complexity.TierRateRange.MaxRate == nil {
-			break
-		}
-
-		return e.complexity.TierRateRange.MaxRate(childComplexity), true
-	case "TierRateRange.minRate":
-		if e.complexity.TierRateRange.MinRate == nil {
-			break
-		}
-
-		return e.complexity.TierRateRange.MinRate(childComplexity), true
-	case "TierRateRange.tier":
-		if e.complexity.TierRateRange.Tier == nil {
-			break
-		}
-
-		return e.complexity.TierRateRange.Tier(childComplexity), true
-
 	case "Transaction.amount":
 		if e.complexity.Transaction.Amount == nil {
 			break
@@ -3539,12 +3312,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TransactionEdge.Node(childComplexity), true
 
-	case "User.applications":
-		if e.complexity.User.Applications == nil {
+	case "User.cleanerProfile":
+		if e.complexity.User.CleanerProfile == nil {
 			break
 		}
 
-		return e.complexity.User.Applications(childComplexity), true
+		return e.complexity.User.CleanerProfile(childComplexity), true
+	case "User.company":
+		if e.complexity.User.Company == nil {
+			break
+		}
+
+		return e.complexity.User.Company(childComplexity), true
 	case "User.displayName":
 		if e.complexity.User.DisplayName == nil {
 			break
@@ -3563,12 +3342,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.ID(childComplexity), true
-	case "User.pendingCleanerApplication":
-		if e.complexity.User.PendingCleanerApplication == nil {
-			break
-		}
-
-		return e.complexity.User.PendingCleanerApplication(childComplexity), true
 	case "User.role":
 		if e.complexity.User.Role == nil {
 			break
@@ -3652,6 +3425,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateBookingUserInput,
 		ec.unmarshalInputCreateCleanerInviteInput,
 		ec.unmarshalInputCreateCleanerProfileInput,
+		ec.unmarshalInputCreateCompanyInput,
 		ec.unmarshalInputCreatePayoutBatchInput,
 		ec.unmarshalInputCreateReviewInput,
 		ec.unmarshalInputCreateServiceAreaInput,
@@ -3660,7 +3434,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputForwardPaginationInput,
 		ec.unmarshalInputModerateReviewInput,
 		ec.unmarshalInputReviewFiltersInput,
-		ec.unmarshalInputSubmitApplicationInput,
 		ec.unmarshalInputTransactionFiltersInput,
 		ec.unmarshalInputUpdateAddOnDefinitionInput,
 		ec.unmarshalInputUpdateAddressInput,
@@ -3871,94 +3644,6 @@ extend type Mutation {
     setDefaultAddress(id: ID!): Address! @authRequired
 }
 `, BuiltIn: false},
-	{Name: "../application.graphql", Input: `enum ApplicationType {
-    CLEANER
-    COMPANY_ADMIN
-}
-
-enum ApplicationStatus {
-    PENDING
-    APPROVED
-    REJECTED
-}
-
-input CompanyInfoInput {
-    companyName: String!
-    registrationNumber: String!
-    taxId: String!
-    companyStreet: String!
-    companyCity: String!
-    companyPostalCode: String!
-    companyCounty: String
-    companyCountry: String!
-    businessType: String
-}
-
-input ApplicationDocumentsInput {
-    identityDocument: Upload!
-    businessRegistration: Upload
-    insuranceCertificate: Upload
-    additionalDocuments: [Upload!]
-}
-
-input SubmitApplicationInput {
-    applicationType: ApplicationType!
-    message: String
-    companyInfo: CompanyInfoInput
-    documents: ApplicationDocumentsInput
-}
-
-type CompanyInfo {
-    companyName: String!
-    registrationNumber: String!
-    taxId: String!
-    companyStreet: String!
-    companyCity: String!
-    companyPostalCode: String!
-    companyCounty: String
-    companyCountry: String!
-    businessType: String
-}
-
-type ApplicationDocuments {
-    identityDocumentUrl: String!
-    businessRegistrationUrl: String
-    insuranceCertificateUrl: String
-    additionalDocuments: [String!]
-}
-
-type Application {
-    id: ID!
-    user: User! @goField(forceResolver: true)
-    applicationType: ApplicationType!
-    status: ApplicationStatus!
-    message: String
-    companyInfo: CompanyInfo
-    documents: ApplicationDocuments
-    rejectionReason: String
-    reviewedBy: User @goField(forceResolver: true)
-    reviewedAt: Time
-    createdAt: Time!
-    updatedAt: Time!
-}
-
-## QUERIES
-
-extend type Query {
-    application(id: ID!): Application @authRequired
-    myApplications: [Application!]! @authRequired
-    pendingApplications: [Application!]! @authRequired
-    generateDocumentSignedUrl(documentUrl: String!): String! @authRequired
-}
-
-## MUTATIONS
-
-extend type Mutation {
-    submitApplication(input: SubmitApplicationInput!): Application! @authRequired
-    approveApplication(applicationId: ID!): Application! @authRequired
-    rejectApplication(applicationId: ID!, reason: String): Application! @authRequired
-}
-`, BuiltIn: false},
 	{Name: "../auth.graphql", Input: `
 type AuthResult {
     accessToken: String!
@@ -3973,10 +3658,12 @@ enum AuthIdentityKind {
 ## MUTATIONS
 
 extend type Mutation {
-    # Used for both the initial sign-up and subsequent sing-ins, when the client has no information about the user session
-    # This flow will trigger the OAuth workflow, where the client will hand off the request to the appropriate social provider
-    # in order to obtain the authorization code
-    authWithIdentityProvider(code: String!, kind: AuthIdentityKind!, intent: String): AuthResult!
+    # Used for both the initial sign-up and subsequent sign-ins
+    # Role assignment based on intent:
+    # - nil/empty → CLIENT (regular customer)
+    # - "cleaner" → CLEANER_ADMIN (company owner from "become a cleaner" flow)
+    # - "invite" + valid inviteToken → CLEANER (cleaner joining via invite link)
+    authWithIdentityProvider(code: String!, kind: AuthIdentityKind!, intent: String, inviteToken: String): AuthResult!
     # Used for when an existing user session is already associated with the client
     authWithRefreshToken(token: String!): AuthResult!
 }
@@ -4389,7 +4076,6 @@ type CleanerProfile {
 
     # Tier and Performance
     tier: CleanerTier!
-    hourlyRate: Int! # Rate in bani (100 bani = 1 RON)
     totalBookings: Int!
     completedBookings: Int!
     cancelledBookings: Int!
@@ -4426,23 +4112,15 @@ type CleanerProfileConnection {
     totalCount: Int!
 }
 
-type TierRateRange {
-    tier: CleanerTier!
-    minRate: Int!
-    maxRate: Int!
-}
-
 input CreateCleanerProfileInput {
     bio: String
     profilePicture: String
-    hourlyRate: Int!
-    serviceAreaInputs: [CreateServiceAreaInput!]!
+    serviceAreaInputs: [CreateServiceAreaInput!]
 }
 
 input UpdateCleanerProfileInput {
     bio: String
     profilePicture: String
-    hourlyRate: Int
     isActive: Boolean
     isAvailableToday: Boolean
 }
@@ -4451,8 +4129,6 @@ input CleanerProfileFiltersInput {
     tier: CleanerTier
     minRating: Float
     maxRating: Float
-    minHourlyRate: Int
-    maxHourlyRate: Int
     isActive: Boolean
     isVerified: Boolean
     isAvailableToday: Boolean
@@ -4492,9 +4168,6 @@ extend type Query {
         postalCode: String
         filters: CleanerProfileFiltersInput
     ): [CleanerProfile!]! @authRequired
-
-    # Get tier rate ranges
-    tierRateRanges: [TierRateRange!]!
 }
 
 ## MUTATIONS
@@ -4518,10 +4191,47 @@ extend type Mutation {
     BUSINESS
 }
 
+enum CompanyStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+# Documents uploaded during company application
+type ApplicationDocuments {
+    identityDocumentUrl: String!
+    businessRegistrationUrl: String
+    insuranceCertificateUrl: String
+    additionalDocuments: [String!]
+}
+
+input CompanyInfoInput {
+    companyName: String!
+    registrationNumber: String!
+    taxId: String!
+    companyStreet: String!
+    companyCity: String!
+    companyPostalCode: String!
+    companyCounty: String
+    companyCountry: String!
+    businessType: String
+}
+
+input ApplicationDocumentsInput {
+    identityDocument: Upload!
+    businessRegistration: Upload
+    insuranceCertificate: Upload
+    additionalDocuments: [Upload!]
+}
+
 type Company {
     id: ID!
     adminUser: User! @goField(forceResolver: true)
     companyType: CompanyType!
+
+    # Approval Status (drives UI state)
+    status: CompanyStatus!
+    rejectionReason: String
 
     # Company Information
     companyName: String!
@@ -4536,6 +4246,9 @@ type Company {
 
     # Documents
     documents: ApplicationDocuments
+
+    # Message from applicant
+    message: String
 
     # Status
     isActive: Boolean!
@@ -4561,10 +4274,17 @@ input UpdateCompanyInput {
     isActive: Boolean
 }
 
+input CreateCompanyInput {
+    companyType: CompanyType!
+    companyInfo: CompanyInfoInput!
+    documents: ApplicationDocumentsInput!
+    message: String
+}
+
 ## QUERIES
 
 extend type Query {
-    # Get the current user's company (if they are a company admin)
+    # Get the current user's company (if they are a cleaner admin)
     myCompany: Company @authRequired
 
     # Get a company by ID (global admin only)
@@ -4572,13 +4292,25 @@ extend type Query {
 
     # List all companies (global admin only)
     companies: [Company!]! @authRequired
+
+    # List pending companies awaiting approval (global admin only)
+    pendingCompanies: [Company!]! @authRequired
 }
 
 ## MUTATIONS
 
 extend type Mutation {
-    # Update the current user's company (company admin only)
+    # Create a new company (CLEANER_ADMIN only, must not have existing company)
+    createCompany(input: CreateCompanyInput!): Company! @authRequired
+
+    # Update the current user's company (cleaner admin only)
     updateCompany(input: UpdateCompanyInput!): Company! @authRequired
+
+    # Approve a company (global admin only)
+    approveCompany(companyId: ID!): Company! @authRequired
+
+    # Reject a company (global admin only)
+    rejectCompany(companyId: ID!, reason: String): Company! @authRequired
 }
 `, BuiltIn: false},
 	{Name: "../gqlcommon.graphql", Input: `# Common directives
@@ -5149,14 +4881,8 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../user.graphql", Input: `enum UserRole {
     CLIENT
-    PENDING_APPLICATION
-    PENDING_CLEANER
-    REJECTED_CLEANER
+    CLEANER_ADMIN
     CLEANER
-    PENDING_COMPANY_APPLICATION
-    PENDING_COMPANY_ADMIN
-    REJECTED_COMPANY_ADMIN
-    COMPANY_ADMIN
     GLOBAL_ADMIN
 }
 
@@ -5170,8 +4896,9 @@ type User {
     role: UserRole!
     email: String!
 
-    applications: [Application!]! @authRequired @goField(forceResolver: true)
-    pendingCleanerApplication: Application @authRequired @goField(forceResolver: true)
+    # Computed fields for capabilities
+    company: Company @authRequired @goField(forceResolver: true)
+    cleanerProfile: CleanerProfile @authRequired @goField(forceResolver: true)
 }
 
 type UserEdge {
@@ -5196,7 +4923,6 @@ extend type Mutation {
     signOut: Void! @authRequired
     deleteCurrentUser: Void! @authRequired
     updateCurrentUser(input: UpdateCurrentUserInput!): User! @authRequired
-    updateUserRole(role: UserRole!): User! @authRequired
 }
 `, BuiltIn: false},
 }
@@ -5239,14 +4965,14 @@ func (ec *executionContext) field_Mutation_addServiceArea_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_approveApplication_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_approveCompany_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "applicationId", ec.unmarshalNID2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "companyId", ec.unmarshalNID2string)
 	if err != nil {
 		return nil, err
 	}
-	args["applicationId"] = arg0
+	args["companyId"] = arg0
 	return args, nil
 }
 
@@ -5268,6 +4994,11 @@ func (ec *executionContext) field_Mutation_authWithIdentityProvider_args(ctx con
 		return nil, err
 	}
 	args["intent"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "inviteToken", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["inviteToken"] = arg3
 	return args, nil
 }
 
@@ -5390,6 +5121,17 @@ func (ec *executionContext) field_Mutation_createCleanerProfile_args(ctx context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateCleanerProfileInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateCleanerProfileInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createCompany_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateCompanyInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateCompanyInput)
 	if err != nil {
 		return nil, err
 	}
@@ -5534,14 +5276,14 @@ func (ec *executionContext) field_Mutation_processPayoutBatch_args(ctx context.C
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_rejectApplication_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_rejectCompany_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "applicationId", ec.unmarshalNID2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "companyId", ec.unmarshalNID2string)
 	if err != nil {
 		return nil, err
 	}
-	args["applicationId"] = arg0
+	args["companyId"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
@@ -5580,17 +5322,6 @@ func (ec *executionContext) field_Mutation_startBooking_args(ctx context.Context
 		return nil, err
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_submitApplication_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSubmitApplicationInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐSubmitApplicationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -5720,17 +5451,6 @@ func (ec *executionContext) field_Mutation_updateServiceDefinition_args(ctx cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateUserRole_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNUserRole2cleanbuddyᚑapiᚋresᚋstoreᚐUserRole)
-	if err != nil {
-		return nil, err
-	}
-	args["role"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5824,17 +5544,6 @@ func (ec *executionContext) field_Query_allTransactions_args(ctx context.Context
 		return nil, err
 	}
 	args["orderBy"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_application_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
 	return args, nil
 }
 
@@ -6006,17 +5715,6 @@ func (ec *executionContext) field_Query_company_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_generateDocumentSignedUrl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "documentUrl", ec.unmarshalNString2string)
-	if err != nil {
-		return nil, err
-	}
-	args["documentUrl"] = arg0
 	return args, nil
 }
 
@@ -6512,10 +6210,10 @@ func (ec *executionContext) fieldContext_AcceptCleanerInviteResult_user(_ contex
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -6553,6 +6251,10 @@ func (ec *executionContext) fieldContext_AcceptCleanerInviteResult_company(_ con
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -6573,6 +6275,8 @@ func (ec *executionContext) fieldContext_AcceptCleanerInviteResult_company(_ con
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -6653,10 +6357,10 @@ func (ec *executionContext) fieldContext_Address_user(_ context.Context, field g
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7186,412 +6890,6 @@ func (ec *executionContext) fieldContext_Address_updatedAt(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Application_id(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_user(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_user,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Application().User(ctx, obj)
-		},
-		nil,
-		ec.marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_applicationType(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_applicationType,
-		func(ctx context.Context) (any, error) {
-			return obj.ApplicationType, nil
-		},
-		nil,
-		ec.marshalNApplicationType2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationType,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_applicationType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ApplicationType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_status(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_status,
-		func(ctx context.Context) (any, error) {
-			return obj.Status, nil
-		},
-		nil,
-		ec.marshalNApplicationStatus2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationStatus,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ApplicationStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_message(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_message,
-		func(ctx context.Context) (any, error) {
-			return obj.Message, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_companyInfo(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_companyInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyInfo, nil
-		},
-		nil,
-		ec.marshalOCompanyInfo2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompanyInfo,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_companyInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "companyName":
-				return ec.fieldContext_CompanyInfo_companyName(ctx, field)
-			case "registrationNumber":
-				return ec.fieldContext_CompanyInfo_registrationNumber(ctx, field)
-			case "taxId":
-				return ec.fieldContext_CompanyInfo_taxId(ctx, field)
-			case "companyStreet":
-				return ec.fieldContext_CompanyInfo_companyStreet(ctx, field)
-			case "companyCity":
-				return ec.fieldContext_CompanyInfo_companyCity(ctx, field)
-			case "companyPostalCode":
-				return ec.fieldContext_CompanyInfo_companyPostalCode(ctx, field)
-			case "companyCounty":
-				return ec.fieldContext_CompanyInfo_companyCounty(ctx, field)
-			case "companyCountry":
-				return ec.fieldContext_CompanyInfo_companyCountry(ctx, field)
-			case "businessType":
-				return ec.fieldContext_CompanyInfo_businessType(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CompanyInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_documents(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_documents,
-		func(ctx context.Context) (any, error) {
-			return obj.Documents, nil
-		},
-		nil,
-		ec.marshalOApplicationDocuments2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplicationDocuments,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_documents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "identityDocumentUrl":
-				return ec.fieldContext_ApplicationDocuments_identityDocumentUrl(ctx, field)
-			case "businessRegistrationUrl":
-				return ec.fieldContext_ApplicationDocuments_businessRegistrationUrl(ctx, field)
-			case "insuranceCertificateUrl":
-				return ec.fieldContext_ApplicationDocuments_insuranceCertificateUrl(ctx, field)
-			case "additionalDocuments":
-				return ec.fieldContext_ApplicationDocuments_additionalDocuments(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ApplicationDocuments", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_rejectionReason(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_rejectionReason,
-		func(ctx context.Context) (any, error) {
-			return obj.RejectionReason, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_rejectionReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_reviewedBy(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_reviewedBy,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Application().ReviewedBy(ctx, obj)
-		},
-		nil,
-		ec.marshalOUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_reviewedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_reviewedAt(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_reviewedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.ReviewedAt, nil
-		},
-		nil,
-		ec.marshalOTime2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_reviewedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_createdAt(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_updatedAt(ctx context.Context, field graphql.CollectedField, obj *store.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ApplicationDocuments_identityDocumentUrl(ctx context.Context, field graphql.CollectedField, obj *store.ApplicationDocuments) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7835,8 +7133,6 @@ func (ec *executionContext) fieldContext_Availability_cleanerProfile(_ context.C
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -8258,10 +7554,10 @@ func (ec *executionContext) fieldContext_Booking_customer(_ context.Context, fie
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -8330,10 +7626,10 @@ func (ec *executionContext) fieldContext_Booking_cleaner(_ context.Context, fiel
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -8410,8 +7706,6 @@ func (ec *executionContext) fieldContext_Booking_cleanerProfile(_ context.Contex
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -9078,10 +8372,10 @@ func (ec *executionContext) fieldContext_Booking_cancelledBy(_ context.Context, 
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10044,6 +9338,10 @@ func (ec *executionContext) fieldContext_CleanerInvite_company(_ context.Context
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -10064,6 +9362,8 @@ func (ec *executionContext) fieldContext_CleanerInvite_company(_ context.Context
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -10115,10 +9415,10 @@ func (ec *executionContext) fieldContext_CleanerInvite_createdBy(_ context.Conte
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10245,10 +9545,10 @@ func (ec *executionContext) fieldContext_CleanerInvite_acceptedBy(_ context.Cont
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10486,10 +9786,10 @@ func (ec *executionContext) fieldContext_CleanerProfile_user(_ context.Context, 
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10556,6 +9856,10 @@ func (ec *executionContext) fieldContext_CleanerProfile_company(_ context.Contex
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -10576,6 +9880,8 @@ func (ec *executionContext) fieldContext_CleanerProfile_company(_ context.Contex
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -10706,35 +10012,6 @@ func (ec *executionContext) fieldContext_CleanerProfile_tier(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CleanerTier does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CleanerProfile_hourlyRate(ctx context.Context, field graphql.CollectedField, obj *store.CleanerProfile) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CleanerProfile_hourlyRate,
-		func(ctx context.Context) (any, error) {
-			return obj.HourlyRate, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CleanerProfile_hourlyRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CleanerProfile",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11445,8 +10722,6 @@ func (ec *executionContext) fieldContext_CleanerProfileEdge_node(_ context.Conte
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -11578,10 +10853,10 @@ func (ec *executionContext) fieldContext_Company_adminUser(_ context.Context, fi
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -11613,6 +10888,64 @@ func (ec *executionContext) fieldContext_Company_companyType(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CompanyType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Company_status(ctx context.Context, field graphql.CollectedField, obj *store.Company) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Company_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNCompanyStatus2cleanbuddyᚑapiᚋresᚋstoreᚐCompanyStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Company_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Company",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CompanyStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Company_rejectionReason(ctx context.Context, field graphql.CollectedField, obj *store.Company) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Company_rejectionReason,
+		func(ctx context.Context) (any, error) {
+			return obj.RejectionReason, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Company_rejectionReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Company",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11918,6 +11251,35 @@ func (ec *executionContext) fieldContext_Company_documents(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Company_message(ctx context.Context, field graphql.CollectedField, obj *store.Company) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Company_message,
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Company_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Company",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Company_isActive(ctx context.Context, field graphql.CollectedField, obj *store.Company) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12045,8 +11407,6 @@ func (ec *executionContext) fieldContext_Company_cleaners(_ context.Context, fie
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -12141,267 +11501,6 @@ func (ec *executionContext) fieldContext_Company_updatedAt(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_companyName(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_companyName,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyName, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_companyName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_registrationNumber(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_registrationNumber,
-		func(ctx context.Context) (any, error) {
-			return obj.RegistrationNumber, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_registrationNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_taxId(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_taxId,
-		func(ctx context.Context) (any, error) {
-			return obj.TaxID, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_taxId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_companyStreet(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_companyStreet,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyStreet, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_companyStreet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_companyCity(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_companyCity,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyCity, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_companyCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_companyPostalCode(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_companyPostalCode,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyPostalCode, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_companyPostalCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_companyCounty(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_companyCounty,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyCounty, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_companyCounty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_companyCountry(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_companyCountry,
-		func(ctx context.Context) (any, error) {
-			return obj.CompanyCountry, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_companyCountry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CompanyInfo_businessType(ctx context.Context, field graphql.CollectedField, obj *store.CompanyInfo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CompanyInfo_businessType,
-		func(ctx context.Context) (any, error) {
-			return obj.BusinessType, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_CompanyInfo_businessType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CompanyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12749,246 +11848,6 @@ func (ec *executionContext) fieldContext_Mutation_setDefaultAddress(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_submitApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_submitApplication,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SubmitApplication(ctx, fc.Args["input"].(SubmitApplicationInput))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal *store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_submitApplication(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_submitApplication_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_approveApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_approveApplication,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ApproveApplication(ctx, fc.Args["applicationId"].(string))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal *store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_approveApplication(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_approveApplication_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_rejectApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_rejectApplication,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RejectApplication(ctx, fc.Args["applicationId"].(string), fc.Args["reason"].(*string))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal *store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_rejectApplication(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_rejectApplication_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_authWithIdentityProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12997,7 +11856,7 @@ func (ec *executionContext) _Mutation_authWithIdentityProvider(ctx context.Conte
 		ec.fieldContext_Mutation_authWithIdentityProvider,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AuthWithIdentityProvider(ctx, fc.Args["code"].(string), fc.Args["kind"].(AuthIdentityKind), fc.Args["intent"].(*string))
+			return ec.resolvers.Mutation().AuthWithIdentityProvider(ctx, fc.Args["code"].(string), fc.Args["kind"].(AuthIdentityKind), fc.Args["intent"].(*string), fc.Args["inviteToken"].(*string))
 		},
 		nil,
 		ec.marshalNAuthResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAuthResult,
@@ -14576,8 +13435,6 @@ func (ec *executionContext) fieldContext_Mutation_createCleanerProfile(ctx conte
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -14684,8 +13541,6 @@ func (ec *executionContext) fieldContext_Mutation_updateCleanerProfile(ctx conte
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -14834,8 +13689,6 @@ func (ec *executionContext) fieldContext_Mutation_updateCleanerTier(ctx context.
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -14888,6 +13741,106 @@ func (ec *executionContext) fieldContext_Mutation_updateCleanerTier(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createCompany,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateCompany(ctx, fc.Args["input"].(CreateCompanyInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.Company
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createCompany(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_updateCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -14932,6 +13885,10 @@ func (ec *executionContext) fieldContext_Mutation_updateCompany(ctx context.Cont
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -14952,6 +13909,8 @@ func (ec *executionContext) fieldContext_Mutation_updateCompany(ctx context.Cont
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -14976,6 +13935,206 @@ func (ec *executionContext) fieldContext_Mutation_updateCompany(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_approveCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_approveCompany,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ApproveCompany(ctx, fc.Args["companyId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.Company
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_approveCompany(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_approveCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_rejectCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_rejectCompany,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RejectCompany(ctx, fc.Args["companyId"].(string), fc.Args["reason"].(*string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.Company
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_rejectCompany(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_rejectCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16504,10 +15663,10 @@ func (ec *executionContext) fieldContext_Mutation_updateCurrentUser(ctx context.
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -16520,74 +15679,6 @@ func (ec *executionContext) fieldContext_Mutation_updateCurrentUser(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateCurrentUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateUserRole(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateUserRole,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateUserRole(ctx, fc.Args["role"].(store.UserRole))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal *store.User
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateUserRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateUserRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16800,10 +15891,10 @@ func (ec *executionContext) fieldContext_PayoutBatch_initiatedBy(_ context.Conte
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -17245,276 +16336,6 @@ func (ec *executionContext) fieldContext_Query_myDefaultAddress(_ context.Contex
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Address", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_application(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_application,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Application(ctx, fc.Args["id"].(string))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal *store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalOApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_application(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_application_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_myApplications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_myApplications,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().MyApplications(ctx)
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal []*store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNApplication2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplicationᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_myApplications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_pendingApplications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_pendingApplications,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().PendingApplications(ctx)
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal []*store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNApplication2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplicationᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_pendingApplications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_generateDocumentSignedUrl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_generateDocumentSignedUrl,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().GenerateDocumentSignedURL(ctx, fc.Args["documentUrl"].(string))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal string
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_generateDocumentSignedUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_generateDocumentSignedUrl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -18519,8 +17340,6 @@ func (ec *executionContext) fieldContext_Query_myCompanyCleaners(_ context.Conte
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -18616,8 +17435,6 @@ func (ec *executionContext) fieldContext_Query_cleanerProfile(ctx context.Contex
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -18724,8 +17541,6 @@ func (ec *executionContext) fieldContext_Query_cleanerProfileByUserId(ctx contex
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -18831,8 +17646,6 @@ func (ec *executionContext) fieldContext_Query_myCleanerProfile(_ context.Contex
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -18988,8 +17801,6 @@ func (ec *executionContext) fieldContext_Query_availableCleaners(ctx context.Con
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -19042,43 +17853,6 @@ func (ec *executionContext) fieldContext_Query_availableCleaners(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_tierRateRanges(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_tierRateRanges,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().TierRateRanges(ctx)
-		},
-		nil,
-		ec.marshalNTierRateRange2ᚕᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTierRateRangeᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_tierRateRanges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "tier":
-				return ec.fieldContext_TierRateRange_tier(ctx, field)
-			case "minRate":
-				return ec.fieldContext_TierRateRange_minRate(ctx, field)
-			case "maxRate":
-				return ec.fieldContext_TierRateRange_maxRate(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TierRateRange", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_myCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -19122,6 +17896,10 @@ func (ec *executionContext) fieldContext_Query_myCompany(_ context.Context, fiel
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -19142,6 +17920,8 @@ func (ec *executionContext) fieldContext_Query_myCompany(_ context.Context, fiel
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -19205,6 +17985,10 @@ func (ec *executionContext) fieldContext_Query_company(ctx context.Context, fiel
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -19225,6 +18009,8 @@ func (ec *executionContext) fieldContext_Query_company(ctx context.Context, fiel
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -19298,6 +18084,10 @@ func (ec *executionContext) fieldContext_Query_companies(_ context.Context, fiel
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -19318,6 +18108,96 @@ func (ec *executionContext) fieldContext_Query_companies(_ context.Context, fiel
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Company_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Company_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_pendingCompanies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_pendingCompanies,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().PendingCompanies(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal []*store.Company
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNCompany2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompanyᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_pendingCompanies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -20381,8 +19261,6 @@ func (ec *executionContext) fieldContext_Query_cleanersInArea(ctx context.Contex
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -20489,8 +19367,6 @@ func (ec *executionContext) fieldContext_Query_cleanersByPostalCode(ctx context.
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -21361,10 +20237,10 @@ func (ec *executionContext) fieldContext_Query_currentUser(_ context.Context, fi
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -21681,10 +20557,10 @@ func (ec *executionContext) fieldContext_Review_customer(_ context.Context, fiel
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -21753,10 +20629,10 @@ func (ec *executionContext) fieldContext_Review_cleaner(_ context.Context, field
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -21833,8 +20709,6 @@ func (ec *executionContext) fieldContext_Review_cleanerProfile(_ context.Context
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -22227,10 +21101,10 @@ func (ec *executionContext) fieldContext_Review_moderatedBy(_ context.Context, f
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -23009,8 +21883,6 @@ func (ec *executionContext) fieldContext_ServiceArea_cleanerProfile(_ context.Co
 				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
 			case "tier":
 				return ec.fieldContext_CleanerProfile_tier(ctx, field)
-			case "hourlyRate":
-				return ec.fieldContext_CleanerProfile_hourlyRate(ctx, field)
 			case "totalBookings":
 				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
 			case "completedBookings":
@@ -23748,93 +22620,6 @@ func (ec *executionContext) fieldContext_ServicePriceCalculation_estimatedDurati
 	return fc, nil
 }
 
-func (ec *executionContext) _TierRateRange_tier(ctx context.Context, field graphql.CollectedField, obj *TierRateRange) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TierRateRange_tier,
-		func(ctx context.Context) (any, error) {
-			return obj.Tier, nil
-		},
-		nil,
-		ec.marshalNCleanerTier2cleanbuddyᚑapiᚋresᚋstoreᚐCleanerTier,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TierRateRange_tier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TierRateRange",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CleanerTier does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TierRateRange_minRate(ctx context.Context, field graphql.CollectedField, obj *TierRateRange) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TierRateRange_minRate,
-		func(ctx context.Context) (any, error) {
-			return obj.MinRate, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TierRateRange_minRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TierRateRange",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TierRateRange_maxRate(ctx context.Context, field graphql.CollectedField, obj *TierRateRange) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TierRateRange_maxRate,
-		func(ctx context.Context) (any, error) {
-			return obj.MaxRate, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TierRateRange_maxRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TierRateRange",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Transaction_id(ctx context.Context, field graphql.CollectedField, obj *store.Transaction) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -24094,10 +22879,10 @@ func (ec *executionContext) fieldContext_Transaction_payer(_ context.Context, fi
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -24166,10 +22951,10 @@ func (ec *executionContext) fieldContext_Transaction_payee(_ context.Context, fi
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -25020,21 +23805,21 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _User_applications(ctx context.Context, field graphql.CollectedField, obj *store.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_company(ctx context.Context, field graphql.CollectedField, obj *store.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_User_applications,
+		ec.fieldContext_User_company,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.User().Applications(ctx, obj)
+			return ec.resolvers.User().Company(ctx, obj)
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.directives.AuthRequired == nil {
-					var zeroVal []*store.Application
+					var zeroVal *store.Company
 					return zeroVal, errors.New("directive authRequired is not implemented")
 				}
 				return ec.directives.AuthRequired(ctx, obj, directive0)
@@ -25043,81 +23828,13 @@ func (ec *executionContext) _User_applications(ctx context.Context, field graphq
 			next = directive1
 			return next
 		},
-		ec.marshalNApplication2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplicationᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_applications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
-			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
-			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_pendingCleanerApplication(ctx context.Context, field graphql.CollectedField, obj *store.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_pendingCleanerApplication,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.User().PendingCleanerApplication(ctx, obj)
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.AuthRequired == nil {
-					var zeroVal *store.Application
-					return zeroVal, errors.New("directive authRequired is not implemented")
-				}
-				return ec.directives.AuthRequired(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalOApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication,
+		ec.marshalOCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_User_pendingCleanerApplication(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -25126,31 +23843,145 @@ func (ec *executionContext) fieldContext_User_pendingCleanerApplication(_ contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Application_user(ctx, field)
-			case "applicationType":
-				return ec.fieldContext_Application_applicationType(ctx, field)
+				return ec.fieldContext_Company_id(ctx, field)
+			case "adminUser":
+				return ec.fieldContext_Company_adminUser(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Company_companyType(ctx, field)
 			case "status":
-				return ec.fieldContext_Application_status(ctx, field)
-			case "message":
-				return ec.fieldContext_Application_message(ctx, field)
-			case "companyInfo":
-				return ec.fieldContext_Application_companyInfo(ctx, field)
-			case "documents":
-				return ec.fieldContext_Application_documents(ctx, field)
+				return ec.fieldContext_Company_status(ctx, field)
 			case "rejectionReason":
-				return ec.fieldContext_Application_rejectionReason(ctx, field)
-			case "reviewedBy":
-				return ec.fieldContext_Application_reviewedBy(ctx, field)
-			case "reviewedAt":
-				return ec.fieldContext_Application_reviewedAt(ctx, field)
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
+			case "companyName":
+				return ec.fieldContext_Company_companyName(ctx, field)
+			case "registrationNumber":
+				return ec.fieldContext_Company_registrationNumber(ctx, field)
+			case "taxId":
+				return ec.fieldContext_Company_taxId(ctx, field)
+			case "companyStreet":
+				return ec.fieldContext_Company_companyStreet(ctx, field)
+			case "companyCity":
+				return ec.fieldContext_Company_companyCity(ctx, field)
+			case "companyPostalCode":
+				return ec.fieldContext_Company_companyPostalCode(ctx, field)
+			case "companyCounty":
+				return ec.fieldContext_Company_companyCounty(ctx, field)
+			case "companyCountry":
+				return ec.fieldContext_Company_companyCountry(ctx, field)
+			case "businessType":
+				return ec.fieldContext_Company_businessType(ctx, field)
+			case "documents":
+				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
+			case "isActive":
+				return ec.fieldContext_Company_isActive(ctx, field)
+			case "totalCleaners":
+				return ec.fieldContext_Company_totalCleaners(ctx, field)
+			case "activeCleaners":
+				return ec.fieldContext_Company_activeCleaners(ctx, field)
+			case "cleaners":
+				return ec.fieldContext_Company_cleaners(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Application_createdAt(ctx, field)
+				return ec.fieldContext_Company_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Application_updatedAt(ctx, field)
+				return ec.fieldContext_Company_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_cleanerProfile(ctx context.Context, field graphql.CollectedField, obj *store.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_cleanerProfile,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.User().CleanerProfile(ctx, obj)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.AuthRequired == nil {
+					var zeroVal *store.CleanerProfile
+					return zeroVal, errors.New("directive authRequired is not implemented")
+				}
+				return ec.directives.AuthRequired(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOCleanerProfile2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerProfile,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_cleanerProfile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CleanerProfile_id(ctx, field)
+			case "user":
+				return ec.fieldContext_CleanerProfile_user(ctx, field)
+			case "userId":
+				return ec.fieldContext_CleanerProfile_userId(ctx, field)
+			case "company":
+				return ec.fieldContext_CleanerProfile_company(ctx, field)
+			case "companyId":
+				return ec.fieldContext_CleanerProfile_companyId(ctx, field)
+			case "bio":
+				return ec.fieldContext_CleanerProfile_bio(ctx, field)
+			case "profilePicture":
+				return ec.fieldContext_CleanerProfile_profilePicture(ctx, field)
+			case "tier":
+				return ec.fieldContext_CleanerProfile_tier(ctx, field)
+			case "totalBookings":
+				return ec.fieldContext_CleanerProfile_totalBookings(ctx, field)
+			case "completedBookings":
+				return ec.fieldContext_CleanerProfile_completedBookings(ctx, field)
+			case "cancelledBookings":
+				return ec.fieldContext_CleanerProfile_cancelledBookings(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_CleanerProfile_averageRating(ctx, field)
+			case "totalReviews":
+				return ec.fieldContext_CleanerProfile_totalReviews(ctx, field)
+			case "totalEarnings":
+				return ec.fieldContext_CleanerProfile_totalEarnings(ctx, field)
+			case "isActive":
+				return ec.fieldContext_CleanerProfile_isActive(ctx, field)
+			case "isAvailableToday":
+				return ec.fieldContext_CleanerProfile_isAvailableToday(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_CleanerProfile_isVerified(ctx, field)
+			case "verifiedAt":
+				return ec.fieldContext_CleanerProfile_verifiedAt(ctx, field)
+			case "backgroundCheck":
+				return ec.fieldContext_CleanerProfile_backgroundCheck(ctx, field)
+			case "identityVerified":
+				return ec.fieldContext_CleanerProfile_identityVerified(ctx, field)
+			case "serviceAreas":
+				return ec.fieldContext_CleanerProfile_serviceAreas(ctx, field)
+			case "reviews":
+				return ec.fieldContext_CleanerProfile_reviews(ctx, field)
+			case "availability":
+				return ec.fieldContext_CleanerProfile_availability(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CleanerProfile_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CleanerProfile_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CleanerProfile", field.Name)
 		},
 	}
 	return fc, nil
@@ -25252,10 +24083,10 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_role(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "applications":
-				return ec.fieldContext_User_applications(ctx, field)
-			case "pendingCleanerApplication":
-				return ec.fieldContext_User_pendingCleanerApplication(ctx, field)
+			case "company":
+				return ec.fieldContext_User_company(ctx, field)
+			case "cleanerProfile":
+				return ec.fieldContext_User_cleanerProfile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -25404,6 +24235,10 @@ func (ec *executionContext) fieldContext_ValidateCleanerInviteResult_company(_ c
 				return ec.fieldContext_Company_adminUser(ctx, field)
 			case "companyType":
 				return ec.fieldContext_Company_companyType(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "rejectionReason":
+				return ec.fieldContext_Company_rejectionReason(ctx, field)
 			case "companyName":
 				return ec.fieldContext_Company_companyName(ctx, field)
 			case "registrationNumber":
@@ -25424,6 +24259,8 @@ func (ec *executionContext) fieldContext_ValidateCleanerInviteResult_company(_ c
 				return ec.fieldContext_Company_businessType(ctx, field)
 			case "documents":
 				return ec.fieldContext_Company_documents(ctx, field)
+			case "message":
+				return ec.fieldContext_Company_message(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Company_isActive(ctx, field)
 			case "totalCleaners":
@@ -27254,7 +26091,7 @@ func (ec *executionContext) unmarshalInputCleanerProfileFiltersInput(ctx context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tier", "minRating", "maxRating", "minHourlyRate", "maxHourlyRate", "isActive", "isVerified", "isAvailableToday", "serviceAreaIds", "city", "neighborhood", "postalCode"}
+	fieldsInOrder := [...]string{"tier", "minRating", "maxRating", "isActive", "isVerified", "isAvailableToday", "serviceAreaIds", "city", "neighborhood", "postalCode"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -27282,20 +26119,6 @@ func (ec *executionContext) unmarshalInputCleanerProfileFiltersInput(ctx context
 				return it, err
 			}
 			it.MaxRating = data
-		case "minHourlyRate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minHourlyRate"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MinHourlyRate = data
-		case "maxHourlyRate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxHourlyRate"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MaxHourlyRate = data
 		case "isActive":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isActive"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -27945,7 +26768,7 @@ func (ec *executionContext) unmarshalInputCreateCleanerProfileInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"bio", "profilePicture", "hourlyRate", "serviceAreaInputs"}
+	fieldsInOrder := [...]string{"bio", "profilePicture", "serviceAreaInputs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -27966,20 +26789,61 @@ func (ec *executionContext) unmarshalInputCreateCleanerProfileInput(ctx context.
 				return it, err
 			}
 			it.ProfilePicture = data
-		case "hourlyRate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hourlyRate"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HourlyRate = data
 		case "serviceAreaInputs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceAreaInputs"))
-			data, err := ec.unmarshalNCreateServiceAreaInput2ᚕᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInputᚄ(ctx, v)
+			data, err := ec.unmarshalOCreateServiceAreaInput2ᚕᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ServiceAreaInputs = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateCompanyInput(ctx context.Context, obj any) (CreateCompanyInput, error) {
+	var it CreateCompanyInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"companyType", "companyInfo", "documents", "message"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "companyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyType"))
+			data, err := ec.unmarshalNCompanyType2cleanbuddyᚑapiᚋresᚋstoreᚐCompanyType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyType = data
+		case "companyInfo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyInfo"))
+			data, err := ec.unmarshalNCompanyInfoInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCompanyInfoInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyInfo = data
+		case "documents":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documents"))
+			data, err := ec.unmarshalNApplicationDocumentsInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐApplicationDocumentsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Documents = data
+		case "message":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Message = data
 		}
 	}
 
@@ -28364,54 +27228,6 @@ func (ec *executionContext) unmarshalInputReviewFiltersInput(ctx context.Context
 				return it, err
 			}
 			it.HasComment = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputSubmitApplicationInput(ctx context.Context, obj any) (SubmitApplicationInput, error) {
-	var it SubmitApplicationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"applicationType", "message", "companyInfo", "documents"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "applicationType":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applicationType"))
-			data, err := ec.unmarshalNApplicationType2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ApplicationType = data
-		case "message":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Message = data
-		case "companyInfo":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyInfo"))
-			data, err := ec.unmarshalOCompanyInfoInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCompanyInfoInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CompanyInfo = data
-		case "documents":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documents"))
-			data, err := ec.unmarshalOApplicationDocumentsInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐApplicationDocumentsInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Documents = data
 		}
 	}
 
@@ -28819,7 +27635,7 @@ func (ec *executionContext) unmarshalInputUpdateCleanerProfileInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"bio", "profilePicture", "hourlyRate", "isActive", "isAvailableToday"}
+	fieldsInOrder := [...]string{"bio", "profilePicture", "isActive", "isAvailableToday"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -28840,13 +27656,6 @@ func (ec *executionContext) unmarshalInputUpdateCleanerProfileInput(ctx context.
 				return it, err
 			}
 			it.ProfilePicture = data
-		case "hourlyRate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hourlyRate"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HourlyRate = data
 		case "isActive":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isActive"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -29300,144 +28109,6 @@ func (ec *executionContext) _Address(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Address_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var applicationImplementors = []string{"Application"}
-
-func (ec *executionContext) _Application(ctx context.Context, sel ast.SelectionSet, obj *store.Application) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, applicationImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Application")
-		case "id":
-			out.Values[i] = ec._Application_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "user":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Application_user(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "applicationType":
-			out.Values[i] = ec._Application_applicationType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "status":
-			out.Values[i] = ec._Application_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "message":
-			out.Values[i] = ec._Application_message(ctx, field, obj)
-		case "companyInfo":
-			out.Values[i] = ec._Application_companyInfo(ctx, field, obj)
-		case "documents":
-			out.Values[i] = ec._Application_documents(ctx, field, obj)
-		case "rejectionReason":
-			out.Values[i] = ec._Application_rejectionReason(ctx, field, obj)
-		case "reviewedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Application_reviewedBy(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "reviewedAt":
-			out.Values[i] = ec._Application_reviewedAt(ctx, field, obj)
-		case "createdAt":
-			out.Values[i] = ec._Application_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._Application_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -30388,11 +29059,6 @@ func (ec *executionContext) _CleanerProfile(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "hourlyRate":
-			out.Values[i] = ec._CleanerProfile_hourlyRate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "totalBookings":
 			out.Values[i] = ec._CleanerProfile_totalBookings(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -30736,6 +29402,13 @@ func (ec *executionContext) _Company(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "status":
+			out.Values[i] = ec._Company_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rejectionReason":
+			out.Values[i] = ec._Company_rejectionReason(ctx, field, obj)
 		case "companyName":
 			out.Values[i] = ec._Company_companyName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -30777,6 +29450,8 @@ func (ec *executionContext) _Company(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Company_businessType(ctx, field, obj)
 		case "documents":
 			out.Values[i] = ec._Company_documents(ctx, field, obj)
+		case "message":
+			out.Values[i] = ec._Company_message(ctx, field, obj)
 		case "isActive":
 			out.Values[i] = ec._Company_isActive(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -30861,79 +29536,6 @@ func (ec *executionContext) _Company(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var companyInfoImplementors = []string{"CompanyInfo"}
-
-func (ec *executionContext) _CompanyInfo(ctx context.Context, sel ast.SelectionSet, obj *store.CompanyInfo) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, companyInfoImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CompanyInfo")
-		case "companyName":
-			out.Values[i] = ec._CompanyInfo_companyName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "registrationNumber":
-			out.Values[i] = ec._CompanyInfo_registrationNumber(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "taxId":
-			out.Values[i] = ec._CompanyInfo_taxId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "companyStreet":
-			out.Values[i] = ec._CompanyInfo_companyStreet(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "companyCity":
-			out.Values[i] = ec._CompanyInfo_companyCity(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "companyPostalCode":
-			out.Values[i] = ec._CompanyInfo_companyPostalCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "companyCounty":
-			out.Values[i] = ec._CompanyInfo_companyCounty(ctx, field, obj)
-		case "companyCountry":
-			out.Values[i] = ec._CompanyInfo_companyCountry(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "businessType":
-			out.Values[i] = ec._CompanyInfo_businessType(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -30977,27 +29579,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "setDefaultAddress":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setDefaultAddress(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "submitApplication":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_submitApplication(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "approveApplication":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_approveApplication(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "rejectApplication":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_rejectApplication(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -31142,9 +29723,30 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createCompany":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCompany(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "updateCompany":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateCompany(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "approveCompany":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_approveCompany(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rejectCompany":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_rejectCompany(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -31278,13 +29880,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateCurrentUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateCurrentUser(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateUserRole":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateUserRole(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -31472,91 +30067,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_myDefaultAddress(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "application":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_application(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "myApplications":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_myApplications(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "pendingApplications":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_pendingApplications(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "generateDocumentSignedUrl":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_generateDocumentSignedUrl(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -31944,28 +30454,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "tierRateRanges":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_tierRateRanges(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "myCompany":
 			field := field
 
@@ -32014,6 +30502,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_companies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "pendingCompanies":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_pendingCompanies(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -33113,55 +31623,6 @@ func (ec *executionContext) _ServicePriceCalculation(ctx context.Context, sel as
 	return out
 }
 
-var tierRateRangeImplementors = []string{"TierRateRange"}
-
-func (ec *executionContext) _TierRateRange(ctx context.Context, sel ast.SelectionSet, obj *TierRateRange) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, tierRateRangeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("TierRateRange")
-		case "tier":
-			out.Values[i] = ec._TierRateRange_tier(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "minRate":
-			out.Values[i] = ec._TierRateRange_minRate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "maxRate":
-			out.Values[i] = ec._TierRateRange_maxRate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var transactionImplementors = []string{"Transaction"}
 
 func (ec *executionContext) _Transaction(ctx context.Context, sel ast.SelectionSet, obj *store.Transaction) graphql.Marshaler {
@@ -33417,19 +31878,16 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "applications":
+		case "company":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_applications(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._User_company(ctx, field, obj)
 				return res
 			}
 
@@ -33453,7 +31911,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "pendingCleanerApplication":
+		case "cleanerProfile":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -33462,7 +31920,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_pendingCleanerApplication(ctx, field, obj)
+				res = ec._User_cleanerProfile(ctx, field, obj)
 				return res
 			}
 
@@ -33984,7 +32442,7 @@ func (ec *executionContext) marshalNAcceptCleanerInviteResult2cleanbuddyᚑapi�
 func (ec *executionContext) marshalNAcceptCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAcceptCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v *AcceptCleanerInviteResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34047,103 +32505,16 @@ func (ec *executionContext) marshalNAddress2ᚕᚖcleanbuddyᚑapiᚋresᚋstore
 func (ec *executionContext) marshalNAddress2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐAddress(ctx context.Context, sel ast.SelectionSet, v *store.Address) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
 	return ec._Address(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNApplication2cleanbuddyᚑapiᚋresᚋstoreᚐApplication(ctx context.Context, sel ast.SelectionSet, v store.Application) graphql.Marshaler {
-	return ec._Application(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNApplication2ᚕᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*store.Application) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication(ctx context.Context, sel ast.SelectionSet, v *store.Application) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Application(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNApplicationStatus2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationStatus(ctx context.Context, v any) (store.ApplicationStatus, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := store.ApplicationStatus(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNApplicationStatus2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v store.ApplicationStatus) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNApplicationType2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationType(ctx context.Context, v any) (store.ApplicationType, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := store.ApplicationType(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNApplicationType2cleanbuddyᚑapiᚋresᚋstoreᚐApplicationType(ctx context.Context, sel ast.SelectionSet, v store.ApplicationType) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
+func (ec *executionContext) unmarshalNApplicationDocumentsInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐApplicationDocumentsInput(ctx context.Context, v any) (*ApplicationDocumentsInput, error) {
+	res, err := ec.unmarshalInputApplicationDocumentsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNAuthIdentityKind2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAuthIdentityKind(ctx context.Context, v any) (AuthIdentityKind, error) {
@@ -34163,7 +32534,7 @@ func (ec *executionContext) marshalNAuthResult2cleanbuddyᚑapiᚋsysᚋgraphql�
 func (ec *executionContext) marshalNAuthResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐAuthResult(ctx context.Context, sel ast.SelectionSet, v *AuthResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34221,7 +32592,7 @@ func (ec *executionContext) marshalNAvailability2ᚕᚖcleanbuddyᚑapiᚋresᚋ
 func (ec *executionContext) marshalNAvailability2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐAvailability(ctx context.Context, sel ast.SelectionSet, v *store.Availability) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34239,7 +32610,7 @@ func (ec *executionContext) marshalNAvailabilityType2cleanbuddyᚑapiᚋresᚋst
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34296,7 +32667,7 @@ func (ec *executionContext) marshalNBooking2ᚕᚖcleanbuddyᚑapiᚋresᚋstore
 func (ec *executionContext) marshalNBooking2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐBooking(ctx context.Context, sel ast.SelectionSet, v *store.Booking) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34310,7 +32681,7 @@ func (ec *executionContext) marshalNBookingConnection2cleanbuddyᚑapiᚋsysᚋg
 func (ec *executionContext) marshalNBookingConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐBookingConnection(ctx context.Context, sel ast.SelectionSet, v *BookingConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34364,7 +32735,7 @@ func (ec *executionContext) marshalNBookingEdge2ᚕᚖcleanbuddyᚑapiᚋsysᚋg
 func (ec *executionContext) marshalNBookingEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐBookingEdge(ctx context.Context, sel ast.SelectionSet, v *BookingEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34382,7 +32753,7 @@ func (ec *executionContext) marshalNBookingStatus2cleanbuddyᚑapiᚋresᚋstore
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34398,7 +32769,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34425,7 +32796,7 @@ func (ec *executionContext) marshalNCancellationReason2cleanbuddyᚑapiᚋresᚋ
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34443,7 +32814,7 @@ func (ec *executionContext) marshalNCleanerEarnings2cleanbuddyᚑapiᚋsysᚋgra
 func (ec *executionContext) marshalNCleanerEarnings2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerEarnings(ctx context.Context, sel ast.SelectionSet, v *CleanerEarnings) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34501,7 +32872,7 @@ func (ec *executionContext) marshalNCleanerInvite2ᚕᚖcleanbuddyᚑapiᚋres�
 func (ec *executionContext) marshalNCleanerInvite2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerInvite(ctx context.Context, sel ast.SelectionSet, v *store.CleanerInvite) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34515,7 +32886,7 @@ func (ec *executionContext) marshalNCleanerInviteResult2cleanbuddyᚑapiᚋsys�
 func (ec *executionContext) marshalNCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v *CleanerInviteResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34533,7 +32904,7 @@ func (ec *executionContext) marshalNCleanerInviteStatus2cleanbuddyᚑapiᚋres�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34590,7 +32961,7 @@ func (ec *executionContext) marshalNCleanerProfile2ᚕᚖcleanbuddyᚑapiᚋres�
 func (ec *executionContext) marshalNCleanerProfile2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCleanerProfile(ctx context.Context, sel ast.SelectionSet, v *store.CleanerProfile) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34604,7 +32975,7 @@ func (ec *executionContext) marshalNCleanerProfileConnection2cleanbuddyᚑapiᚋ
 func (ec *executionContext) marshalNCleanerProfileConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerProfileConnection(ctx context.Context, sel ast.SelectionSet, v *CleanerProfileConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34658,7 +33029,7 @@ func (ec *executionContext) marshalNCleanerProfileEdge2ᚕᚖcleanbuddyᚑapiᚋ
 func (ec *executionContext) marshalNCleanerProfileEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCleanerProfileEdge(ctx context.Context, sel ast.SelectionSet, v *CleanerProfileEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -34676,7 +33047,7 @@ func (ec *executionContext) marshalNCleanerTier2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34733,11 +33104,33 @@ func (ec *executionContext) marshalNCompany2ᚕᚖcleanbuddyᚑapiᚋresᚋstore
 func (ec *executionContext) marshalNCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompany(ctx context.Context, sel ast.SelectionSet, v *store.Company) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
 	return ec._Company(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCompanyInfoInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCompanyInfoInput(ctx context.Context, v any) (*CompanyInfoInput, error) {
+	res, err := ec.unmarshalInputCompanyInfoInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCompanyStatus2cleanbuddyᚑapiᚋresᚋstoreᚐCompanyStatus(ctx context.Context, v any) (store.CompanyStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := store.CompanyStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCompanyStatus2cleanbuddyᚑapiᚋresᚋstoreᚐCompanyStatus(ctx context.Context, sel ast.SelectionSet, v store.CompanyStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNCompanyType2cleanbuddyᚑapiᚋresᚋstoreᚐCompanyType(ctx context.Context, v any) (store.CompanyType, error) {
@@ -34751,7 +33144,7 @@ func (ec *executionContext) marshalNCompanyType2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34802,6 +33195,11 @@ func (ec *executionContext) unmarshalNCreateCleanerProfileInput2cleanbuddyᚑapi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateCompanyInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateCompanyInput(ctx context.Context, v any) (CreateCompanyInput, error) {
+	res, err := ec.unmarshalInputCreateCompanyInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreatePayoutBatchInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreatePayoutBatchInput(ctx context.Context, v any) (CreatePayoutBatchInput, error) {
 	res, err := ec.unmarshalInputCreatePayoutBatchInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -34815,21 +33213,6 @@ func (ec *executionContext) unmarshalNCreateReviewInput2cleanbuddyᚑapiᚋsys�
 func (ec *executionContext) unmarshalNCreateServiceAreaInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInput(ctx context.Context, v any) (CreateServiceAreaInput, error) {
 	res, err := ec.unmarshalInputCreateServiceAreaInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNCreateServiceAreaInput2ᚕᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInputᚄ(ctx context.Context, v any) ([]*CreateServiceAreaInput, error) {
-	var vSlice []any
-	vSlice = graphql.CoerceList(v)
-	var err error
-	res := make([]*CreateServiceAreaInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCreateServiceAreaInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
 }
 
 func (ec *executionContext) unmarshalNCreateServiceAreaInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInput(ctx context.Context, v any) (*CreateServiceAreaInput, error) {
@@ -34857,7 +33240,7 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	res := graphql.MarshalFloatContext(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
@@ -34873,7 +33256,7 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34889,7 +33272,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34905,7 +33288,7 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34927,7 +33310,7 @@ func (ec *executionContext) marshalNPaymentMethod2cleanbuddyᚑapiᚋresᚋstore
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -34984,7 +33367,7 @@ func (ec *executionContext) marshalNPayoutBatch2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNPayoutBatch2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐPayoutBatch(ctx context.Context, sel ast.SelectionSet, v *store.PayoutBatch) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35042,7 +33425,7 @@ func (ec *executionContext) marshalNReview2ᚕᚖcleanbuddyᚑapiᚋresᚋstore�
 func (ec *executionContext) marshalNReview2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐReview(ctx context.Context, sel ast.SelectionSet, v *store.Review) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35056,7 +33439,7 @@ func (ec *executionContext) marshalNReviewConnection2cleanbuddyᚑapiᚋsysᚋgr
 func (ec *executionContext) marshalNReviewConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐReviewConnection(ctx context.Context, sel ast.SelectionSet, v *ReviewConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35110,7 +33493,7 @@ func (ec *executionContext) marshalNReviewEdge2ᚕᚖcleanbuddyᚑapiᚋsysᚋgr
 func (ec *executionContext) marshalNReviewEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐReviewEdge(ctx context.Context, sel ast.SelectionSet, v *ReviewEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35128,7 +33511,7 @@ func (ec *executionContext) marshalNReviewStatus2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35145,7 +33528,7 @@ func (ec *executionContext) marshalNServiceAddOn2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35261,7 +33644,7 @@ func (ec *executionContext) marshalNServiceAddOnDefinition2ᚕᚖcleanbuddyᚑap
 func (ec *executionContext) marshalNServiceAddOnDefinition2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐServiceAddOnDefinition(ctx context.Context, sel ast.SelectionSet, v *store.ServiceAddOnDefinition) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35319,7 +33702,7 @@ func (ec *executionContext) marshalNServiceArea2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNServiceArea2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐServiceArea(ctx context.Context, sel ast.SelectionSet, v *store.ServiceArea) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35377,7 +33760,7 @@ func (ec *executionContext) marshalNServiceDefinition2ᚕᚖcleanbuddyᚑapiᚋr
 func (ec *executionContext) marshalNServiceDefinition2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐServiceDefinition(ctx context.Context, sel ast.SelectionSet, v *store.ServiceDefinition) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35395,7 +33778,7 @@ func (ec *executionContext) marshalNServiceFrequency2cleanbuddyᚑapiᚋresᚋst
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35408,7 +33791,7 @@ func (ec *executionContext) marshalNServicePriceCalculation2cleanbuddyᚑapiᚋs
 func (ec *executionContext) marshalNServicePriceCalculation2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐServicePriceCalculation(ctx context.Context, sel ast.SelectionSet, v *ServicePriceCalculation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35426,7 +33809,7 @@ func (ec *executionContext) marshalNServiceType2cleanbuddyᚑapiᚋresᚋstore�
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35442,69 +33825,10 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNSubmitApplicationInput2cleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐSubmitApplicationInput(ctx context.Context, v any) (SubmitApplicationInput, error) {
-	res, err := ec.unmarshalInputSubmitApplicationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNTierRateRange2ᚕᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTierRateRangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*TierRateRange) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTierRateRange2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTierRateRange(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNTierRateRange2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTierRateRange(ctx context.Context, sel ast.SelectionSet, v *TierRateRange) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._TierRateRange(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
@@ -35517,7 +33841,7 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35570,7 +33894,7 @@ func (ec *executionContext) marshalNTransaction2ᚕᚖcleanbuddyᚑapiᚋresᚋs
 func (ec *executionContext) marshalNTransaction2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *store.Transaction) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35584,7 +33908,7 @@ func (ec *executionContext) marshalNTransactionConnection2cleanbuddyᚑapiᚋsys
 func (ec *executionContext) marshalNTransactionConnection2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTransactionConnection(ctx context.Context, sel ast.SelectionSet, v *TransactionConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35638,7 +33962,7 @@ func (ec *executionContext) marshalNTransactionEdge2ᚕᚖcleanbuddyᚑapiᚋsys
 func (ec *executionContext) marshalNTransactionEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐTransactionEdge(ctx context.Context, sel ast.SelectionSet, v *TransactionEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35656,7 +33980,7 @@ func (ec *executionContext) marshalNTransactionStatus2cleanbuddyᚑapiᚋresᚋs
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35673,7 +33997,7 @@ func (ec *executionContext) marshalNTransactionType2cleanbuddyᚑapiᚋresᚋsto
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35739,7 +34063,7 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 	res := graphql.MarshalUpload(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35753,7 +34077,7 @@ func (ec *executionContext) unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlge
 func (ec *executionContext) marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35761,7 +34085,7 @@ func (ec *executionContext) marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	res := graphql.MarshalUpload(*v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35774,7 +34098,7 @@ func (ec *executionContext) marshalNUser2cleanbuddyᚑapiᚋresᚋstoreᚐUser(c
 func (ec *executionContext) marshalNUser2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐUser(ctx context.Context, sel ast.SelectionSet, v *store.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35828,7 +34152,7 @@ func (ec *executionContext) marshalNUserEdge2ᚕᚖcleanbuddyᚑapiᚋsysᚋgrap
 func (ec *executionContext) marshalNUserEdge2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *UserEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35846,7 +34170,7 @@ func (ec *executionContext) marshalNUserRole2cleanbuddyᚑapiᚋresᚋstoreᚐUs
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35859,7 +34183,7 @@ func (ec *executionContext) marshalNValidateCleanerInviteResult2cleanbuddyᚑapi
 func (ec *executionContext) marshalNValidateCleanerInviteResult2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐValidateCleanerInviteResult(ctx context.Context, sel ast.SelectionSet, v *ValidateCleanerInviteResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35876,7 +34200,7 @@ func (ec *executionContext) marshalNVoid2cleanbuddyᚑapiᚋsysᚋgraphqlᚋscal
 	res := scalar.MarshalVoid(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35890,7 +34214,7 @@ func (ec *executionContext) unmarshalNVoid2ᚖcleanbuddyᚑapiᚋsysᚋgraphql�
 func (ec *executionContext) marshalNVoid2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋscalarᚐVoid(ctx context.Context, sel ast.SelectionSet, v *scalar.Void) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -35898,7 +34222,7 @@ func (ec *executionContext) marshalNVoid2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋs
 	res := scalar.MarshalVoid(*v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -35962,7 +34286,7 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -36134,7 +34458,7 @@ func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, sel ast.SelectionSet, v *introspection.Type) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
@@ -36151,7 +34475,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
@@ -36164,26 +34488,11 @@ func (ec *executionContext) marshalOAddress2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐ
 	return ec._Address(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOApplication2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplication(ctx context.Context, sel ast.SelectionSet, v *store.Application) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Application(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOApplicationDocuments2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐApplicationDocuments(ctx context.Context, sel ast.SelectionSet, v *store.ApplicationDocuments) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ApplicationDocuments(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOApplicationDocumentsInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐApplicationDocumentsInput(ctx context.Context, v any) (*ApplicationDocumentsInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputApplicationDocumentsInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOAvailability2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐAvailability(ctx context.Context, sel ast.SelectionSet, v *store.Availability) graphql.Marshaler {
@@ -36351,21 +34660,6 @@ func (ec *executionContext) marshalOCompany2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐ
 	return ec._Company(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCompanyInfo2ᚖcleanbuddyᚑapiᚋresᚋstoreᚐCompanyInfo(ctx context.Context, sel ast.SelectionSet, v *store.CompanyInfo) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._CompanyInfo(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOCompanyInfoInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCompanyInfoInput(ctx context.Context, v any) (*CompanyInfoInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputCompanyInfoInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalOCreateBookingAddressInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateBookingAddressInput(ctx context.Context, v any) (*CreateBookingAddressInput, error) {
 	if v == nil {
 		return nil, nil
@@ -36388,6 +34682,24 @@ func (ec *executionContext) unmarshalOCreateCleanerInviteInput2ᚖcleanbuddyᚑa
 	}
 	res, err := ec.unmarshalInputCreateCleanerInviteInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCreateServiceAreaInput2ᚕᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInputᚄ(ctx context.Context, v any) ([]*CreateServiceAreaInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*CreateServiceAreaInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCreateServiceAreaInput2ᚖcleanbuddyᚑapiᚋsysᚋgraphqlᚋgenᚐCreateServiceAreaInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {

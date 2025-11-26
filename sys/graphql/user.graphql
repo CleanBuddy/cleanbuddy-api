@@ -1,13 +1,7 @@
 enum UserRole {
     CLIENT
-    PENDING_APPLICATION
-    PENDING_CLEANER
-    REJECTED_CLEANER
+    CLEANER_ADMIN
     CLEANER
-    PENDING_COMPANY_APPLICATION
-    PENDING_COMPANY_ADMIN
-    REJECTED_COMPANY_ADMIN
-    COMPANY_ADMIN
     GLOBAL_ADMIN
 }
 
@@ -21,8 +15,9 @@ type User {
     role: UserRole!
     email: String!
 
-    applications: [Application!]! @authRequired @goField(forceResolver: true)
-    pendingCleanerApplication: Application @authRequired @goField(forceResolver: true)
+    # Computed fields for capabilities
+    company: Company @authRequired @goField(forceResolver: true)
+    cleanerProfile: CleanerProfile @authRequired @goField(forceResolver: true)
 }
 
 type UserEdge {
@@ -47,5 +42,4 @@ extend type Mutation {
     signOut: Void! @authRequired
     deleteCurrentUser: Void! @authRequired
     updateCurrentUser(input: UpdateCurrentUserInput!): User! @authRequired
-    updateUserRole(role: UserRole!): User! @authRequired
 }

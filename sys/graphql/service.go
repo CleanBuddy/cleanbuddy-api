@@ -115,8 +115,9 @@ func (qr *queryResolver) CalculateServicePrice(ctx context.Context, input gen.Ca
 
 	// 5. Calculate base service price
 	// Price = (Base Hours * Hourly Rate * Price Multiplier)
+	// TODO: hourlyRate will be re-implemented later with a proper pricing system
 	baseHours := serviceDefinition.BaseHours
-	hourlyRate := cleanerProfile.HourlyRate
+	hourlyRate := 0 // Placeholder until pricing is re-implemented
 	priceMultiplier := serviceDefinition.PriceMultiplier
 
 	servicePrice := int(float64(hourlyRate) * baseHours * priceMultiplier)

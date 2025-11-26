@@ -28,9 +28,8 @@ type CleanerProfile struct {
 	ProfilePicture *string `gorm:"size:512"` // URL to profile picture
 
 	// Tier and Performance
-	Tier                CleanerTier `gorm:"size:20;not null;default:'new';index:idx_cleaner_tier"`
-	HourlyRate          int         `gorm:"not null"` // Rate in bani (smallest RON unit, 1 RON = 100 bani)
-	TotalBookings       int         `gorm:"not null;default:0"`
+	Tier              CleanerTier `gorm:"size:20;not null;default:'new';index:idx_cleaner_tier"`
+	TotalBookings     int         `gorm:"not null;default:0"`
 	CompletedBookings   int         `gorm:"not null;default:0"`
 	CancelledBookings   int         `gorm:"not null;default:0"`
 	AverageRating       float64     `gorm:"type:decimal(3,2);default:0.00"` // 0.00 to 5.00
@@ -49,45 +48,6 @@ type CleanerProfile struct {
 
 	CreatedAt time.Time `gorm:"autoCreateTime;not null;index:idx_cleaner_created"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime;not null"`
-}
-
-// GetMinRateForTier returns the minimum hourly rate for a tier (in bani)
-func GetMinRateForTier(tier CleanerTier) int {
-	switch tier {
-	case CleanerTierNew:
-		return 4000 // 40 RON
-	case CleanerTierStandard:
-		return 5000 // 50 RON
-	case CleanerTierPremium:
-		return 7000 // 70 RON
-	case CleanerTierPro:
-		return 10000 // 100 RON
-	default:
-		return 4000
-	}
-}
-
-// GetMaxRateForTier returns the maximum hourly rate for a tier (in bani)
-func GetMaxRateForTier(tier CleanerTier) int {
-	switch tier {
-	case CleanerTierNew:
-		return 5000 // 50 RON
-	case CleanerTierStandard:
-		return 7000 // 70 RON
-	case CleanerTierPremium:
-		return 10000 // 100 RON
-	case CleanerTierPro:
-		return 15000 // 150 RON
-	default:
-		return 5000
-	}
-}
-
-// IsRateValidForTier checks if a rate is within the valid range for a tier
-func (cp *CleanerProfile) IsRateValidForTier() bool {
-	minRate := GetMinRateForTier(cp.Tier)
-	maxRate := GetMaxRateForTier(cp.Tier)
-	return cp.HourlyRate >= minRate && cp.HourlyRate <= maxRate
 }
 
 // CleanerProfileStore defines the data access interface for cleaner profiles
@@ -119,19 +79,17 @@ type CleanerProfileStore interface {
 
 // CleanerProfileFilters contains filter options for listing cleaner profiles
 type CleanerProfileFilters struct {
-	Tier              *CleanerTier
-	MinRating         *float64
-	MaxRating         *float64
-	MinHourlyRate     *int
-	MaxHourlyRate     *int
-	IsActive          *bool
-	IsVerified        *bool
-	IsAvailableToday  *bool
-	ServiceAreaIDs    []string // Filter by service areas
-	CompanyID         *string  // Filter by company
-	Limit             int
-	Offset            int
-	OrderBy           string // e.g., "average_rating DESC", "hourly_rate ASC"
+	Tier             *CleanerTier
+	MinRating        *float64
+	MaxRating        *float64
+	IsActive         *bool
+	IsVerified       *bool
+	IsAvailableToday *bool
+	ServiceAreaIDs   []string // Filter by service areas
+	CompanyID        *string  // Filter by company
+	Limit            int
+	Offset           int
+	OrderBy          string // e.g., "average_rating DESC"
 }
 
 // CleanerStats represents statistics to update for a cleaner

@@ -3,9 +3,7 @@ package graphql
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
-
 
 	"cleanbuddy-api/res/store"
 	"cleanbuddy-api/sys/graphql/gen"
@@ -138,8 +136,6 @@ func (qr *queryResolver) SearchCleaners(ctx context.Context, filters *gen.Cleane
 		storeFilters.Tier = filters.Tier
 		storeFilters.MinRating = filters.MinRating
 		storeFilters.MaxRating = filters.MaxRating
-		storeFilters.MinHourlyRate = filters.MinHourlyRate
-		storeFilters.MaxHourlyRate = filters.MaxHourlyRate
 		storeFilters.IsActive = filters.IsActive
 		storeFilters.IsVerified = filters.IsVerified
 		storeFilters.IsAvailableToday = filters.IsAvailableToday
@@ -216,26 +212,6 @@ func (qr *queryResolver) AvailableCleaners(ctx context.Context, date time.Time, 
 	return nil, errors.New("not yet implemented")
 }
 
-func (qr *queryResolver) TierRateRanges(ctx context.Context) ([]*gen.TierRateRange, error) {
-	tiers := []store.CleanerTier{
-		store.CleanerTierNew,
-		store.CleanerTierStandard,
-		store.CleanerTierPremium,
-		store.CleanerTierPro,
-	}
-
-	ranges := make([]*gen.TierRateRange, len(tiers))
-	for i, tier := range tiers {
-		ranges[i] = &gen.TierRateRange{
-			Tier:    tier,
-			MinRate: store.GetMinRateForTier(tier),
-			MaxRate: store.GetMaxRateForTier(tier),
-		}
-	}
-
-	return ranges, nil
-}
-
 // MUTATION RESOLVERS
 
 func (mr *mutationResolver) CreateCleanerProfile(ctx context.Context, input gen.CreateCleanerProfileInput) (*store.CleanerProfile, error) {
@@ -244,9 +220,9 @@ func (mr *mutationResolver) CreateCleanerProfile(ctx context.Context, input gen.
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
-	// Check if user is a cleaner
-	if !currentUser.IsCleaner() {
-		return nil, errors.New("user must have cleaner role to create a profile")
+	// Check if user is a cleaner or cleaner admin (cleaner admin can also create their own profile)
+	if !currentUser.IsCleaner() && !currentUser.IsCleanerAdmin() {
+		return nil, errors.New("user must have cleaner or cleaner admin role to create a profile")
 	}
 
 	// Check if profile already exists
@@ -255,21 +231,11 @@ func (mr *mutationResolver) CreateCleanerProfile(ctx context.Context, input gen.
 		return nil, errors.New("cleaner profile already exists for this user")
 	}
 
-	// Validate hourly rate for new tier
-	newTier := store.CleanerTierNew
-	minRate := store.GetMinRateForTier(newTier)
-	maxRate := store.GetMaxRateForTier(newTier)
-
-	if input.HourlyRate < minRate || input.HourlyRate > maxRate {
-		return nil, fmt.Errorf("hourly rate must be between %d and %d bani for new cleaners", minRate, maxRate)
-	}
-
 	// Create profile
 	profile := &store.CleanerProfile{
 		ID:         uuid.New().String(),
 		UserID:     currentUser.ID,
-		Tier:       newTier,
-		HourlyRate: input.HourlyRate,
+		Tier:       store.CleanerTierNew,
 		IsActive:   true,
 		IsVerified: false,
 	}
@@ -354,16 +320,6 @@ func (mr *mutationResolver) UpdateCleanerProfile(ctx context.Context, input gen.
 	}
 	if input.ProfilePicture != nil {
 		profile.ProfilePicture = input.ProfilePicture
-	}
-	if input.HourlyRate != nil {
-		// Validate rate for current tier
-		if *input.HourlyRate < store.GetMinRateForTier(profile.Tier) || *input.HourlyRate > store.GetMaxRateForTier(profile.Tier) {
-			return nil, fmt.Errorf("hourly rate must be between %d and %d bani for %s tier",
-				store.GetMinRateForTier(profile.Tier),
-				store.GetMaxRateForTier(profile.Tier),
-				profile.Tier)
-		}
-		profile.HourlyRate = *input.HourlyRate
 	}
 	if input.IsActive != nil {
 		profile.IsActive = *input.IsActive

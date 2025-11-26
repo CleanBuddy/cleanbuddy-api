@@ -8,7 +8,6 @@ import (
 type Store interface {
 	AuthSessions() AuthSessionStore
 	Users() UserStore
-	Applications() ApplicationStore
 	CleanerProfiles() CleanerProfileStore
 	ServiceAreas() ServiceAreaStore
 	Addresses() AddressStore

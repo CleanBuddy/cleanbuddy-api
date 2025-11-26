@@ -18,14 +18,6 @@ func NewCleanerProfileStore(rootStore *storeImpl) *cleanerProfileStore {
 // MUTATIONS
 
 func (cps *cleanerProfileStore) Create(ctx context.Context, profile *store.CleanerProfile) error {
-	// Validate rate is within tier range
-	if !profile.IsRateValidForTier() {
-		minRate := store.GetMinRateForTier(profile.Tier)
-		maxRate := store.GetMaxRateForTier(profile.Tier)
-		return fmt.Errorf("hourly rate %d is outside valid range for tier %s (%d-%d bani)",
-			profile.HourlyRate, profile.Tier, minRate, maxRate)
-	}
-
 	result := cps.db.WithContext(ctx).Create(profile)
 	if result.Error != nil {
 		return result.Error
@@ -55,14 +47,6 @@ func (cps *cleanerProfileStore) GetByUserID(ctx context.Context, userID string) 
 }
 
 func (cps *cleanerProfileStore) Update(ctx context.Context, profile *store.CleanerProfile) error {
-	// Validate rate is within tier range if rate changed
-	if !profile.IsRateValidForTier() {
-		minRate := store.GetMinRateForTier(profile.Tier)
-		maxRate := store.GetMaxRateForTier(profile.Tier)
-		return fmt.Errorf("hourly rate %d is outside valid range for tier %s (%d-%d bani)",
-			profile.HourlyRate, profile.Tier, minRate, maxRate)
-	}
-
 	result := cps.db.WithContext(ctx).Save(profile)
 	if result.Error != nil {
 		return result.Error
@@ -96,12 +80,6 @@ func (cps *cleanerProfileStore) List(ctx context.Context, filters store.CleanerP
 	}
 	if filters.MaxRating != nil {
 		query = query.Where("average_rating <= ?", *filters.MaxRating)
-	}
-	if filters.MinHourlyRate != nil {
-		query = query.Where("hourly_rate >= ?", *filters.MinHourlyRate)
-	}
-	if filters.MaxHourlyRate != nil {
-		query = query.Where("hourly_rate <= ?", *filters.MaxHourlyRate)
 	}
 	if filters.IsActive != nil {
 		query = query.Where("is_active = ?", *filters.IsActive)

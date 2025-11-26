@@ -16,43 +16,34 @@ type userResolver struct{ *Resolver }
 
 func (r *Resolver) User() gen.UserResolver { return &userResolver{r} }
 
-func (ur *userResolver) Applications(ctx context.Context, user *store.User) ([]*store.Application, error) {
-	currentUser := middleware.GetCurrentUser(ctx)
-	if currentUser == nil {
-		return nil, errors.New("access forbidden, authorization required")
+func (ur *userResolver) Company(ctx context.Context, user *store.User) (*store.Company, error) {
+	// Only cleaner admins have a company
+	if !user.IsCleanerAdmin() {
+		return nil, nil
 	}
 
-	applications, err := ur.Store.Applications().GetByUser(ctx, currentUser.ID)
+	company, err := ur.Store.Companies().GetByAdminUserID(ctx, user.ID)
 	if err != nil {
-		ur.Logger.Printf("Error retrieving applications: %s", err)
-		return nil, errors.New("internal server error")
+		// Company may not exist yet
+		return nil, nil
 	}
 
-	return applications, nil
+	return company, nil
 }
 
-func (ur *userResolver) PendingCleanerApplication(ctx context.Context, user *store.User) (*store.Application, error) {
-	currentUser := middleware.GetCurrentUser(ctx)
-	if currentUser == nil {
-		return nil, errors.New("access forbidden, authorization required")
+func (ur *userResolver) CleanerProfile(ctx context.Context, user *store.User) (*store.CleanerProfile, error) {
+	// Only cleaners and cleaner admins can have profiles
+	if !user.IsCleaner() && !user.IsCleanerAdmin() {
+		return nil, nil
 	}
 
-	// Get all applications for the user
-	applications, err := ur.Store.Applications().GetByUser(ctx, currentUser.ID)
+	profile, err := ur.Store.CleanerProfiles().GetByUserID(ctx, user.ID)
 	if err != nil {
-		ur.Logger.Printf("Error retrieving applications: %s", err)
-		return nil, errors.New("internal server error")
+		// Profile may not exist yet
+		return nil, nil
 	}
 
-	// Find the most recent pending cleaner application
-	for _, app := range applications {
-		if app.ApplicationType == store.ApplicationTypeCleaner && app.Status == store.ApplicationStatusPending {
-			return app, nil
-		}
-	}
-
-	// No pending cleaner application found
-	return nil, nil
+	return profile, nil
 }
 
 // QUERIES RESOLVERS
@@ -134,49 +125,3 @@ func (mr *mutationResolver) UpdateCurrentUser(ctx context.Context, input gen.Upd
 
 	return updatedUser, nil
 }
-
-func (mr *mutationResolver) UpdateUserRole(ctx context.Context, role store.UserRole) (*store.User, error) {
-	currentUser := middleware.GetCurrentUser(ctx)
-	if currentUser == nil {
-		return nil, errors.New("access forbidden, authorization required")
-	}
-
-	// Define valid role transitions
-	validTransitions := map[store.UserRole][]store.UserRole{
-		store.UserRoleClient:               {store.UserRolePendingApplication, store.UserRolePendingCompanyApplication},
-		store.UserRoleRejectedCleaner:      {store.UserRolePendingApplication},
-		store.UserRoleRejectedCompanyAdmin: {store.UserRolePendingCompanyApplication},
-	}
-
-	newRole := role
-
-	// Validate transition
-	allowedRoles, exists := validTransitions[currentUser.Role]
-	if !exists {
-		mr.Logger.Printf("Role transition not allowed from %s", currentUser.Role)
-		return nil, errors.New("role transition not allowed from your current role")
-	}
-
-	isValid := false
-	for _, allowed := range allowedRoles {
-		if newRole == allowed {
-			isValid = true
-			break
-		}
-	}
-
-	if !isValid {
-		mr.Logger.Printf("Cannot transition from %s to %s", currentUser.Role, newRole)
-		return nil, errors.New("cannot transition to the requested role")
-	}
-
-	// Update role
-	updatedUser, err := mr.Store.Users().Update(ctx, currentUser.ID, nil, &newRole)
-	if err != nil {
-		mr.Logger.Printf("Error updating user role: %s", err)
-		return nil, errors.New("error updating user role")
-	}
-
-	return updatedUser, nil
-}
-

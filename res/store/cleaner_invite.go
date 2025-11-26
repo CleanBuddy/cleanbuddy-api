@@ -50,6 +50,11 @@ type CleanerInvite struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime;not null"`
 }
 
+// IsExpired checks if the invite has expired
+func (ci *CleanerInvite) IsExpired() bool {
+	return time.Now().After(ci.ExpiresAt)
+}
+
 // CleanerInviteStore defines the data access interface for cleaner invites
 type CleanerInviteStore interface {
 	// Create creates a new cleaner invite

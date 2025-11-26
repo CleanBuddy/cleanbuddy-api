@@ -120,7 +120,7 @@ func (qr *queryResolver) CleanerInvite(ctx context.Context, id string) (*store.C
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
-	if !currentUser.IsCompanyAdmin() && !currentUser.IsGlobalAdmin() {
+	if !currentUser.IsCleanerAdmin() && !currentUser.IsGlobalAdmin() {
 		return nil, errors.New("access forbidden, company admin access required")
 	}
 
@@ -131,7 +131,7 @@ func (qr *queryResolver) CleanerInvite(ctx context.Context, id string) (*store.C
 	}
 
 	// Company admins can only see their own company's invites
-	if currentUser.IsCompanyAdmin() {
+	if currentUser.IsCleanerAdmin() {
 		company, err := qr.Store.Companies().GetByAdminUserID(ctx, currentUser.ID)
 		if err != nil || company.ID != invite.CompanyID {
 			return nil, errors.New("access forbidden")
@@ -147,7 +147,7 @@ func (qr *queryResolver) MyCompanyInvites(ctx context.Context) ([]*store.Cleaner
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
-	if !currentUser.IsCompanyAdmin() {
+	if !currentUser.IsCleanerAdmin() {
 		return nil, errors.New("access forbidden, company admin access required")
 	}
 
@@ -172,7 +172,7 @@ func (qr *queryResolver) MyCompanyCleaners(ctx context.Context) ([]*store.Cleane
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
-	if !currentUser.IsCompanyAdmin() {
+	if !currentUser.IsCleanerAdmin() {
 		return nil, errors.New("access forbidden, company admin access required")
 	}
 
@@ -203,7 +203,7 @@ func (mr *mutationResolver) CreateCleanerInvite(ctx context.Context, input *gen.
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
-	if !currentUser.IsCompanyAdmin() {
+	if !currentUser.IsCleanerAdmin() {
 		return nil, errors.New("access forbidden, only company admins can create invites")
 	}
 
@@ -297,7 +297,7 @@ func (mr *mutationResolver) AcceptCleanerInvite(ctx context.Context, token strin
 	}
 
 	// Check user role - they should not already be a cleaner or company admin
-	if currentUser.IsCleaner() || currentUser.IsCompanyAdmin() {
+	if currentUser.IsCleaner() || currentUser.IsCleanerAdmin() {
 		return nil, errors.New("you are already a cleaner or company admin")
 	}
 
@@ -346,7 +346,7 @@ func (mr *mutationResolver) RevokeCleanerInvite(ctx context.Context, id string) 
 		return nil, errors.New("access forbidden, authorization required")
 	}
 
-	if !currentUser.IsCompanyAdmin() && !currentUser.IsGlobalAdmin() {
+	if !currentUser.IsCleanerAdmin() && !currentUser.IsGlobalAdmin() {
 		return nil, errors.New("access forbidden, company admin access required")
 	}
 
@@ -357,7 +357,7 @@ func (mr *mutationResolver) RevokeCleanerInvite(ctx context.Context, id string) 
 	}
 
 	// Company admins can only revoke their own company's invites
-	if currentUser.IsCompanyAdmin() {
+	if currentUser.IsCleanerAdmin() {
 		company, err := mr.Store.Companies().GetByAdminUserID(ctx, currentUser.ID)
 		if err != nil || company.ID != invite.CompanyID {
 			return nil, errors.New("access forbidden")

@@ -12,10 +12,12 @@ enum AuthIdentityKind {
 ## MUTATIONS
 
 extend type Mutation {
-    # Used for both the initial sign-up and subsequent sing-ins, when the client has no information about the user session
-    # This flow will trigger the OAuth workflow, where the client will hand off the request to the appropriate social provider
-    # in order to obtain the authorization code
-    authWithIdentityProvider(code: String!, kind: AuthIdentityKind!, intent: String): AuthResult!
+    # Used for both the initial sign-up and subsequent sign-ins
+    # Role assignment based on intent:
+    # - nil/empty → CLIENT (regular customer)
+    # - "cleaner" → CLEANER_ADMIN (company owner from "become a cleaner" flow)
+    # - "invite" + valid inviteToken → CLEANER (cleaner joining via invite link)
+    authWithIdentityProvider(code: String!, kind: AuthIdentityKind!, intent: String, inviteToken: String): AuthResult!
     # Used for when an existing user session is already associated with the client
     authWithRefreshToken(token: String!): AuthResult!
 }

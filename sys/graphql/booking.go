@@ -378,8 +378,9 @@ func (mr *mutationResolver) CreateBooking(ctx context.Context, input gen.CreateB
 	}
 
 	// Calculate base service price
+	// TODO: hourlyRate will be re-implemented later with a proper pricing system
 	baseHours := serviceDefinition.BaseHours
-	hourlyRate := cleanerProfile.HourlyRate
+	hourlyRate := 0 // Placeholder until pricing is re-implemented
 	priceMultiplier := serviceDefinition.PriceMultiplier
 	servicePrice := int(float64(hourlyRate) * baseHours * priceMultiplier)
 
